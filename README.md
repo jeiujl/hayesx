@@ -26,6 +26,8 @@ The app has five tabs, taken from the `HayesX Mobile App.xlsx` sitemap:
 | [`data/preflight-checklist.json`](data/preflight-checklist.json) | The full checklist as structured data, ready to import |
 | [`prototype/index.html`](prototype/index.html) | Self-contained clickable prototype — open in a browser |
 
+**Live prototype:** https://claude.ai/code/artifact/9436b345-1efb-448f-9b88-47fb3edf08fc
+
 ## Source material
 
 Derived from the supplied `Mobile App Developer` pack:

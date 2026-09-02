@@ -1,0 +1,1007 @@
+<title>HayesX-250 Pilot App</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* ── Shell tokens: light (bare :root = complete palette) ─────────────── */
+:root{
+  --bg:#E8EBEE; --bg-2:#DDE2E7; --raised:#F7F8FA;
+  --ink:#161A20; --mut:#5B6673; --faint:#8794A2;
+  --line:#CFD6DD; --line-soft:#DFE4E9;
+  --sky:#1F5F8B; --sky-soft:#DCE8F1;
+  --bezel:#20262E; --bezel-2:#12161C; --bezel-line:#39424E;
+  --shadow:0 18px 50px -14px rgba(18,22,28,.34), 0 2px 8px rgba(18,22,28,.10);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#12161C; --bg-2:#0D1116; --raised:#1A1F27;
+    --ink:#E9EDF2; --mut:#8E99A7; --faint:#6B7684;
+    --line:#2A323C; --line-soft:#222933;
+    --sky:#69B0DF; --sky-soft:#16303F;
+    --bezel:#232A33; --bezel-2:#0A0D11; --bezel-line:#3D4753;
+    --shadow:0 20px 55px -12px rgba(0,0,0,.66), 0 2px 8px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#12161C; --bg-2:#0D1116; --raised:#1A1F27;
+  --ink:#E9EDF2; --mut:#8E99A7; --faint:#6B7684;
+  --line:#2A323C; --line-soft:#222933;
+  --sky:#69B0DF; --sky-soft:#16303F;
+  --bezel:#232A33; --bezel-2:#0A0D11; --bezel-line:#3D4753;
+  --shadow:0 20px 55px -12px rgba(0,0,0,.66), 0 2px 8px rgba(0,0,0,.4);
+}
+
+/* ── Device-screen tokens: the product's committed "Daylight" theme ───
+   Fixed in both host themes on purpose. This is a picture of a device
+   screen; the app defaults to daylight because Part 103 is day-only. */
+:root{
+  --s-bg:#FBFBF9; --s-card:#FFFFFF; --s-ink:#111519; --s-mut:#5E6873;
+  --s-faint:#8B95A0; --s-line:#E1E5E9; --s-line-2:#EDF0F2;
+  --s-go:#0E7A3C; --s-go-bg:#E3F3E9; --s-go-line:#B9E0C8;
+  --s-warn:#B3211C; --s-warn-bg:#FBE9E7; --s-warn-line:#F0C4C0;
+  --s-caut:#96650A; --s-caut-bg:#FDF3DE; --s-caut-line:#EFDCAE;
+  --s-sky:#1F5F8B; --s-sky-bg:#E7F0F6; --s-sky-line:#C3D9E8;
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0; background:var(--bg); color:var(--ink);
+  font-family:"Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  font-size:15px; line-height:1.55; -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,h4{font-family:Archivo,system-ui,sans-serif; text-wrap:balance; margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace}
+a{color:var(--sky)}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
+:focus-visible{outline:2px solid var(--sky); outline-offset:2px; border-radius:3px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+
+/* ── Page frame ──────────────────────────────────────────────────────── */
+.wrap{max-width:1180px; margin:0 auto; padding:26px 20px 64px}
+
+.masthead{
+  display:flex; flex-wrap:wrap; align-items:flex-end; gap:20px 36px;
+  padding-bottom:20px; border-bottom:1px solid var(--line);
+}
+.mast-id{flex:1 1 300px; min-width:0}
+.eyebrow{
+  font-family:"IBM Plex Mono",monospace; font-size:11px; font-weight:500;
+  letter-spacing:.13em; text-transform:uppercase; color:var(--sky); margin-bottom:8px;
+}
+.masthead h1{font-size:clamp(30px,5vw,44px); font-weight:800; letter-spacing:-.028em; line-height:1.02}
+.masthead p{margin:9px 0 0; color:var(--mut); max-width:56ch; font-size:15px}
+
+/* Flight-manual title block — the document convention this app lives inside */
+.docblock{
+  display:grid; grid-template-columns:auto auto; gap:2px 18px;
+  font-family:"IBM Plex Mono",monospace; font-size:11.5px; line-height:1.7;
+  padding:11px 16px; border:1px solid var(--line); border-left:3px solid var(--sky);
+  background:var(--raised); align-self:flex-end;
+}
+.docblock dt{color:var(--faint); text-transform:uppercase; letter-spacing:.07em; font-size:10px; margin:0}
+.docblock dd{margin:0; color:var(--ink); font-weight:500}
+
+/* ── Two-column stage ────────────────────────────────────────────────── */
+.stage{display:grid; grid-template-columns:minmax(0,auto) minmax(320px,1fr); gap:44px; margin-top:34px; align-items:start}
+@media (max-width:900px){.stage{grid-template-columns:1fr; gap:30px; justify-items:center}}
+
+/* ── Phone ───────────────────────────────────────────────────────────── */
+.device{position:sticky; top:22px}
+@media (max-width:900px){.device{position:static}}
+.phone{
+  width:min(392px, calc(100vw - 40px));
+  background:linear-gradient(168deg,var(--bezel),var(--bezel-2));
+  border:1px solid var(--bezel-line); border-radius:44px; padding:11px;
+  box-shadow:var(--shadow);
+}
+.screen{
+  position:relative; overflow:hidden; border-radius:34px;
+  background:var(--s-bg); color:var(--s-ink);
+  height:clamp(552px,74vh,742px); display:flex; flex-direction:column;
+}
+.statusbar{
+  flex:none; display:flex; justify-content:space-between; align-items:center;
+  padding:11px 24px 5px; font-family:"IBM Plex Mono",monospace;
+  font-size:11.5px; font-weight:600; color:var(--s-ink); letter-spacing:.02em;
+}
+.statusbar span:last-child{letter-spacing:.14em; font-size:10px; color:var(--s-mut)}
+
+/* global aircraft status banner */
+.banner{
+  flex:none; display:flex; align-items:center; gap:9px;
+  padding:8px 16px; font-size:12px; font-weight:600; letter-spacing:.02em;
+}
+.banner .dot{width:8px;height:8px;border-radius:50%;flex:none;background:currentColor}
+.banner .sn{font-family:"IBM Plex Mono",monospace; font-weight:500; opacity:.72; margin-left:auto; font-size:11px}
+.banner.go{background:var(--s-go-bg); color:var(--s-go); border-bottom:1px solid var(--s-go-line)}
+.banner.bad{background:var(--s-warn-bg); color:var(--s-warn); border-bottom:1px solid var(--s-warn-line)}
+.banner.act{background:var(--s-sky-bg); color:var(--s-sky); border-bottom:1px solid var(--s-sky-line)}
+
+.body{flex:1 1 auto; overflow-y:auto; overscroll-behavior:contain; padding:16px 16px 22px}
+.body::-webkit-scrollbar{width:0}
+.pane{display:none; flex-direction:column; gap:13px; animation:rise .22s ease-out}
+.pane.on{display:flex}
+@keyframes rise{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+
+/* tab bar */
+.tabs{
+  flex:none; display:grid; grid-template-columns:repeat(5,1fr);
+  border-top:1px solid var(--s-line); background:var(--s-card); padding:6px 2px 11px;
+}
+.tab{display:flex; flex-direction:column; align-items:center; gap:3px; padding:4px 1px; color:var(--s-faint); position:relative}
+.tab svg{width:21px;height:21px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tab span{font-size:9.5px; font-weight:600; letter-spacing:.005em}
+.tab[aria-current="true"]{color:var(--s-sky)}
+.tab .badge{
+  position:absolute; top:1px; right:calc(50% - 17px); min-width:15px; height:15px;
+  border-radius:8px; background:var(--s-warn); color:#fff; font-size:9px; font-weight:700;
+  display:grid; place-items:center; padding:0 4px; font-family:"IBM Plex Mono",monospace;
+}
+
+/* ── In-screen building blocks ───────────────────────────────────────── */
+.h{font-size:20px; font-weight:700; letter-spacing:-.018em; line-height:1.2}
+.sub{font-size:12.5px; color:var(--s-mut); margin-top:2px}
+.cite{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--s-faint); letter-spacing:.02em}
+.card{background:var(--s-card); border:1px solid var(--s-line); border-radius:12px; padding:13px 14px}
+.rowline{display:flex; align-items:center; gap:10px}
+.grow{flex:1 1 auto; min-width:0}
+.k{font-size:11px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; color:var(--s-faint)}
+.v{font-size:14px; font-weight:600}
+.hr{height:1px; background:var(--s-line-2); margin:2px 0}
+
+.btn{
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  min-height:56px; border-radius:12px; font-family:Archivo,sans-serif;
+  font-size:16px; font-weight:700; letter-spacing:.005em;
+  background:var(--s-sky); color:#fff; width:100%;
+}
+.btn.go{background:var(--s-go)}
+.btn.bad{background:var(--s-warn)}
+.btn.quiet{background:var(--s-card); color:var(--s-ink); border:1px solid var(--s-line); font-weight:600}
+.btn.small{min-height:44px; font-size:14px}
+.btn[disabled]{background:var(--s-line); color:var(--s-faint); cursor:not-allowed}
+
+.pill{
+  display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:999px;
+  font-size:10.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase;
+  font-family:"IBM Plex Mono",monospace;
+}
+.pill.go{background:var(--s-go-bg); color:var(--s-go)}
+.pill.bad{background:var(--s-warn-bg); color:var(--s-warn)}
+.pill.caut{background:var(--s-caut-bg); color:var(--s-caut)}
+.pill.sky{background:var(--s-sky-bg); color:var(--s-sky)}
+
+/* progress rail A..J */
+.rail{display:flex; gap:3px}
+.rail i{
+  flex:1; height:22px; border-radius:4px; display:grid; place-items:center;
+  font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; font-style:normal;
+  background:var(--s-line-2); color:var(--s-faint);
+}
+.rail i.done{background:var(--s-go-bg); color:var(--s-go)}
+.rail i.now{background:var(--s-sky); color:#fff}
+
+/* checklist item */
+.item{background:var(--s-card); border:1px solid var(--s-line); border-radius:12px; padding:10px 12px 11px; display:flex; flex-direction:column; gap:8px}
+.item .txt{font-size:14.5px; line-height:1.34; font-weight:500; margin-top:1px}
+.item .id{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--s-faint); letter-spacing:.06em}
+.choice{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.choice button{
+  min-height:44px; border-radius:9px; border:1.5px solid var(--s-line);
+  font-family:Archivo,sans-serif; font-size:13.5px; font-weight:700; letter-spacing:.06em;
+  color:var(--s-mut); background:var(--s-card); display:flex; align-items:center; justify-content:center; gap:6px;
+  transition:background .12s, color .12s, border-color .12s;
+}
+.item[data-state="pass"] .ok{background:var(--s-go); border-color:var(--s-go); color:#fff}
+.item[data-state="pass"]{border-color:var(--s-go-line)}
+.item[data-state="nogo"] .no{background:var(--s-warn); border-color:var(--s-warn); color:#fff}
+.item[data-state="nogo"]{border-color:var(--s-warn-line)}
+
+/* warning interstitial */
+.alert{border-radius:14px; padding:18px 16px; display:flex; flex-direction:column; gap:12px}
+.alert.danger{background:var(--s-warn-bg); border:1.5px solid var(--s-warn-line); color:var(--s-warn)}
+.alert h3{font-size:15px; letter-spacing:.14em; text-transform:uppercase; font-weight:800}
+.alert ul{margin:0; padding-left:18px; display:flex; flex-direction:column; gap:9px; color:var(--s-ink); font-size:14.5px; line-height:1.4}
+.alert ul b{color:var(--s-warn); font-weight:800; letter-spacing:.04em}
+
+/* numeric gate */
+.readout{
+  background:var(--s-card); border:1.5px solid var(--s-warn-line); border-radius:14px;
+  padding:18px 16px; text-align:center;
+}
+.readout .num{font-family:"IBM Plex Mono",monospace; font-size:60px; font-weight:600; line-height:1; letter-spacing:-.03em; color:var(--s-warn)}
+.readout .num em{font-style:normal; font-size:26px; color:var(--s-faint); margin-left:4px}
+.keys{display:grid; grid-template-columns:repeat(3,1fr); gap:7px}
+.keys button{min-height:46px; border-radius:10px; background:var(--s-card); border:1px solid var(--s-line); font-family:"IBM Plex Mono",monospace; font-size:19px; font-weight:500}
+
+/* totals block — modelled on the paper logbook's page-totals panel */
+.totals{background:var(--s-card); border:1px solid var(--s-line); border-radius:14px; overflow:hidden}
+.totals .top{display:grid; grid-template-columns:1fr 1fr; text-align:center; padding:16px 8px 14px}
+.totals .top div+div{border-left:1px solid var(--s-line-2)}
+.totals .fig{font-family:"IBM Plex Mono",monospace; font-size:32px; font-weight:600; letter-spacing:-.03em; font-variant-numeric:tabular-nums}
+.totals .lab{font-size:9.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase; color:var(--s-faint); margin-top:2px}
+.totals .foot{border-top:1px dashed var(--s-line); padding:9px 14px; display:flex; justify-content:space-between; font-size:11.5px; color:var(--s-mut); font-family:"IBM Plex Mono",monospace}
+
+.strip{display:flex; align-items:baseline; gap:14px; padding:2px 4px; font-size:12.5px; color:var(--s-mut)}
+.strip b{font-family:"IBM Plex Mono",monospace; font-size:15px; font-weight:600; color:var(--s-ink); font-variant-numeric:tabular-nums}
+.strip .k{margin-right:auto}
+.entry{background:var(--s-card); border:1px solid var(--s-line); border-radius:11px; padding:11px 13px; display:flex; align-items:center; gap:11px}
+.entry .date{font-family:"IBM Plex Mono",monospace; font-size:11px; color:var(--s-faint); width:44px; flex:none; text-align:center; line-height:1.2}
+.entry .date b{display:block; font-size:17px; color:var(--s-ink); font-weight:600}
+.entry .min{font-family:"IBM Plex Mono",monospace; font-size:13px; font-weight:600; font-variant-numeric:tabular-nums}
+.month{font-size:10.5px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--s-faint); padding:4px 2px 0}
+
+.field{background:var(--s-card); border:1px solid var(--s-line); border-radius:10px; padding:9px 12px}
+.field .k{margin-bottom:1px}
+.field .val{font-size:14.5px; font-weight:500}
+.field .from{font-size:10px; color:var(--s-sky); font-family:"IBM Plex Mono",monospace; letter-spacing:.03em}
+.two{display:grid; grid-template-columns:1fr 1fr; gap:9px}
+
+.emg{display:grid; grid-template-columns:1fr 1fr; gap:8px}
+.emg a{
+  background:var(--s-card); border:1px solid var(--s-warn-line); border-left:3px solid var(--s-warn);
+  border-radius:9px; padding:10px 11px; text-decoration:none; color:var(--s-ink); display:block;
+}
+.emg .n{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--s-warn); font-weight:600; letter-spacing:.04em}
+.emg .t{font-size:12.5px; font-weight:600; line-height:1.25; margin-top:2px}
+.prio{background:var(--s-caut-bg); border:1px solid var(--s-caut-line); border-radius:12px; padding:12px 13px}
+.prio ol{margin:8px 0 0; padding-left:19px; font-size:13.5px; font-weight:600; line-height:1.6; color:var(--s-ink)}
+
+.msg{background:var(--s-card); border:1px solid var(--s-line); border-radius:11px; padding:12px 13px; display:flex; flex-direction:column; gap:6px}
+.msg.crit{border-color:var(--s-warn-line); border-left:3px solid var(--s-warn)}
+.msg .when{font-family:"IBM Plex Mono",monospace; font-size:10px; color:var(--s-faint)}
+.msg p{margin:0; font-size:13px; color:var(--s-mut); line-height:1.45}
+
+.list{background:var(--s-card); border:1px solid var(--s-line); border-radius:12px; overflow:hidden}
+.list .r{display:flex; align-items:center; gap:11px; padding:12px 13px; border-bottom:1px solid var(--s-line-2)}
+.list .r:last-child{border-bottom:none}
+.list .r .v{font-weight:500}
+.chev{color:var(--s-faint); font-size:15px; flex:none}
+
+.sig{border:1px dashed var(--s-line); border-radius:10px; background:var(--s-card); padding:8px 12px 4px}
+.sig svg{display:block; width:100%; height:52px}
+.sig .cap{font-family:"IBM Plex Mono",monospace; font-size:9.5px; color:var(--s-faint); letter-spacing:.06em; text-transform:uppercase; border-top:1px solid var(--s-line-2); padding-top:5px; margin-top:2px}
+
+.stamp{font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--s-mut); line-height:1.75; background:var(--s-sky-bg); border-radius:10px; padding:10px 12px}
+.stamp b{color:var(--s-ink); font-weight:600}
+
+.photos{display:grid; grid-template-columns:1fr 1fr 1fr; gap:7px}
+.photos div{aspect-ratio:1; border-radius:8px; background:var(--s-line-2); display:grid; place-items:center; color:var(--s-faint); font-size:10px; font-family:"IBM Plex Mono",monospace; border:1px solid var(--s-line)}
+.photos div.add{border:1.5px dashed var(--s-line); background:var(--s-card); color:var(--s-sky); font-size:22px}
+
+/* ── Right rail: index + annotation ──────────────────────────────────── */
+.rail-col{display:flex; flex-direction:column; gap:22px; width:100%; max-width:560px}
+.panel{background:var(--raised); border:1px solid var(--line); border-radius:14px; padding:18px 20px}
+.panel h2{font-size:12px; font-weight:700; letter-spacing:.13em; text-transform:uppercase; color:var(--faint); margin-bottom:12px}
+
+#note h3{font-size:23px; font-weight:700; letter-spacing:-.02em}
+#note .lede{color:var(--mut); margin:7px 0 0; font-size:14.5px; max-width:60ch}
+#note ul{margin:15px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:11px}
+#note li{display:grid; grid-template-columns:auto 1fr; gap:11px; align-items:baseline; font-size:14px; line-height:1.5}
+#note li .src{
+  font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; letter-spacing:.02em;
+  color:var(--sky); background:var(--sky-soft); border-radius:4px; padding:2px 6px; white-space:nowrap;
+}
+
+.idx{display:flex; flex-direction:column; gap:14px}
+.idx section{display:flex; flex-direction:column; gap:6px}
+.idx .grp{font-family:"IBM Plex Mono",monospace; font-size:10px; letter-spacing:.13em; text-transform:uppercase; color:var(--faint)}
+.idx .row{display:flex; flex-wrap:wrap; gap:6px}
+.idx button{
+  border:1px solid var(--line); background:var(--bg); border-radius:7px;
+  padding:6px 11px; font-size:13px; font-weight:500; color:var(--mut);
+  transition:border-color .13s, color .13s, background .13s;
+}
+.idx button:hover{border-color:var(--sky); color:var(--ink)}
+.idx button[aria-current="true"]{background:var(--sky); border-color:var(--sky); color:#fff; font-weight:600}
+:root[data-theme="dark"] .idx button[aria-current="true"],
+:root:not([data-theme="light"]) .idx button[aria-current="true"]{color:#0D1116}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .idx button[aria-current="true"]{color:#fff}}
+
+/* limits table — real numbers, real citations */
+.limits{width:100%; border-collapse:collapse; font-size:13.5px}
+.limits th{text-align:left; font-size:10px; letter-spacing:.12em; text-transform:uppercase; color:var(--faint); font-weight:700; padding:0 0 7px; border-bottom:1px solid var(--line)}
+.limits td{padding:7px 0; border-bottom:1px solid var(--line-soft); vertical-align:baseline}
+.limits td:nth-child(2){font-family:"IBM Plex Mono",monospace; font-weight:600; text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; padding-left:14px}
+.limits td:nth-child(3){font-family:"IBM Plex Mono",monospace; font-size:10.5px; color:var(--faint); text-align:right; padding-left:14px; white-space:nowrap}
+.limits tr:last-child td{border-bottom:none}
+
+.foot{margin-top:44px; padding-top:20px; border-top:1px solid var(--line); color:var(--faint); font-size:13px; display:flex; flex-wrap:wrap; gap:6px 18px}
+.foot .mono{font-size:11.5px}
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="mast-id">
+      <div class="eyebrow">Draft &middot; Design review</div>
+      <h1>HayesX-250 Pilot App</h1>
+      <p>Preflight, logbook and manuals for the single-seat eVTOL &mdash; built around
+         one rule: the checklist decides whether the aircraft flies.</p>
+    </div>
+    <dl class="docblock">
+      <dt>Source</dt><dd>HayesX-250-FM-001</dd>
+      <dt>Revision</dt><dd>A &nbsp;&middot;&nbsp; 2026</dd>
+      <dt>Screens</dt><dd>12 of 12 drafted</dd>
+      <dt>Checklist</dt><dd>57 items, Ch. 4</dd>
+    </dl>
+  </header>
+
+  <div class="stage">
+
+    <!-- ══════════════════════ DEVICE ══════════════════════ -->
+    <div class="device">
+      <div class="phone">
+        <div class="screen">
+          <div class="statusbar"><span>9:41</span><span id="sbmode">OFFLINE &middot; SYNC PENDING 2</span></div>
+          <div class="banner go" id="banner">
+            <i class="dot"></i><strong id="bantext">AIRWORTHY</strong>
+            <span class="sn" id="bansn">HX250-0047</span>
+          </div>
+
+          <div class="body" id="body">
+
+            <!-- 1 · PREFLIGHT HOME -->
+            <div class="pane on" id="p-home">
+              <div>
+                <div class="h">Preflight</div>
+                <div class="sub">Flight Manual Ch. 4 &middot; 57 items &middot; 10 sections</div>
+              </div>
+
+              <div class="card">
+                <div class="rowline">
+                  <div class="grow">
+                    <div class="v" style="font-size:16px">HayesX&#8209;250</div>
+                    <div class="cite">S/N HX250-0047 &middot; Ultralight, FAA Part 103</div>
+                  </div>
+                  <span class="pill go">Airworthy</span>
+                </div>
+              </div>
+
+              <button class="btn go" onclick="go('p-check')">START PREFLIGHT</button>
+
+              <div class="list">
+                <div class="r">
+                  <div class="grow">
+                    <div class="k">Last preflight</div>
+                    <div class="v">Yesterday, 07:12 &middot; all 57 passed</div>
+                    <div class="cite">Signed J. Hayes &middot; 36.17&deg;N 115.14&deg;W</div>
+                  </div><span class="chev">&rsaquo;</span>
+                </div>
+                <div class="r">
+                  <div class="grow">
+                    <div class="k">Flight Manual review</div>
+                    <div class="v">Revision A acknowledged</div>
+                    <div class="cite">14 Aug 2026 &middot; satisfies FM 4.2</div>
+                  </div><span class="pill go">OK</span>
+                </div>
+                <div class="r">
+                  <div class="grow">
+                    <div class="k">Preflight history</div>
+                    <div class="v">28 records</div>
+                  </div><span class="chev">&rsaquo;</span>
+                </div>
+              </div>
+
+              <div class="strip">
+                <span class="k">To date</span>
+                <span><b>112</b> flights</span>
+                <span><b>50:06</b> hours</span>
+              </div>
+            </div>
+
+            <!-- 2 · CHECKLIST SECTION C -->
+            <div class="pane" id="p-check">
+              <div class="rail">
+                <i class="done">A</i><i class="done">B</i><i class="now">C</i><i>D</i><i>E</i>
+                <i>F</i><i>G</i><i>H</i><i>I</i><i>J</i>
+              </div>
+              <div>
+                <div class="h">Section C &middot; Propellers</div>
+                <div class="sub"><span class="cite">FM 4.3.2</span> &middot; answer every item to continue</div>
+              </div>
+
+              <div class="item" data-state="pass">
+                <div><div class="id">C-01</div><div class="txt">Check all propellers are intact</div></div>
+                <div class="choice"><button class="ok">&#10003; PASS</button><button class="no">&#10007; NO-GO</button></div>
+              </div>
+              <div class="item" data-state="pass">
+                <div><div class="id">C-02</div><div class="txt">Ensure there are no cracks</div></div>
+                <div class="choice"><button class="ok">&#10003; PASS</button><button class="no">&#10007; NO-GO</button></div>
+              </div>
+              <div class="item">
+                <div><div class="id">C-03</div><div class="txt">Check to ensure no deformation</div></div>
+                <div class="choice"><button class="ok">&#10003; PASS</button><button class="no">&#10007; NO-GO</button></div>
+              </div>
+              <div class="item">
+                <div><div class="id">C-04</div><div class="txt">Make sure they are securely attached</div></div>
+                <div class="choice"><button class="ok">&#10003; PASS</button><button class="no">&#10007; NO-GO</button></div>
+              </div>
+              <div class="item">
+                <div><div class="id">C-05</div><div class="txt">Check propeller tie wire fixing is intact</div></div>
+                <div class="choice"><button class="ok">&#10003; PASS</button><button class="no">&#10007; NO-GO</button></div>
+              </div>
+              <div class="item">
+                <div><div class="id">C-06</div><div class="txt">Check all marked joints show no evidence of movement or misalignment</div></div>
+                <div class="choice"><button class="ok">&#10003; PASS</button><button class="no">&#10007; NO-GO</button></div>
+              </div>
+
+              <div class="rowline" style="justify-content:space-between">
+                <span class="cite" id="ctally">2 of 6 answered</span>
+                <span class="cite">Tap NO-GO to see the gate</span>
+              </div>
+              <button class="btn" id="cnext" disabled onclick="go('p-warn')">CONTINUE TO SECTION D</button>
+            </div>
+
+            <!-- 3 · WARNING INTERSTITIAL -->
+            <div class="pane" id="p-warn">
+              <div class="rail">
+                <i class="done">A</i><i class="done">B</i><i class="done">C</i><i class="done">D</i><i class="done">E</i>
+                <i class="done">F</i><i class="now">G</i><i>H</i><i>I</i><i>J</i>
+              </div>
+              <div class="alert danger">
+                <h3>&#9888; Warning</h3>
+                <ul>
+                  <li><b>DO NOT</b> connect or disconnect QS12 connectors under electrical load.</li>
+                  <li><b>DO NOT</b> short-circuit battery terminals.</li>
+                  <li><b>DO NOT</b> operate with damaged connectors.</li>
+                </ul>
+                <div class="cite" style="color:var(--s-warn)">FM 4.4.3 &middot; dual 108 V DC system</div>
+              </div>
+              <div class="card">
+                <div class="k">Next</div>
+                <div class="v">G1 &middot; High-voltage connector inspection</div>
+                <div class="cite">7 items, FM 4.4.2 &mdash; then G2 power-up, confirmed one step at a time</div>
+              </div>
+              <button class="btn bad" onclick="go('p-gate')">I UNDERSTAND &mdash; CONTINUE</button>
+              <button class="btn quiet small" onclick="go('p-check')">Back to Section C</button>
+            </div>
+
+            <!-- 4 · NUMERIC GATE -->
+            <div class="pane" id="p-gate">
+              <div class="rail">
+                <i class="done">A</i><i class="done">B</i><i class="done">C</i><i class="done">D</i><i class="done">E</i>
+                <i class="done">F</i><i class="done">G</i><i class="done">H</i><i class="done">I</i><i class="now">J</i>
+              </div>
+              <div>
+                <div class="h">Battery charge</div>
+                <div class="sub"><span class="cite">J-05 &middot; FM 4.7</span> &middot; enter the PFD reading</div>
+              </div>
+              <div class="readout" id="gatebox">
+                <div class="num"><span id="gateval">92</span><em>%</em></div>
+                <div class="cite" id="gatemsg" style="color:var(--s-warn); margin-top:8px; font-weight:600">
+                  BELOW THE 95% MINIMUM BEFORE TAKEOFF
+                </div>
+              </div>
+              <div class="cite" style="text-align:center">Minimum 95% &middot; FM 2.5 Battery Limitations</div>
+              <div class="keys">
+                <button onclick="key('1')">1</button><button onclick="key('2')">2</button><button onclick="key('3')">3</button>
+                <button onclick="key('4')">4</button><button onclick="key('5')">5</button><button onclick="key('6')">6</button>
+                <button onclick="key('7')">7</button><button onclick="key('8')">8</button><button onclick="key('9')">9</button>
+                <button onclick="key('c')">C</button><button onclick="key('0')">0</button><button onclick="key('x')">&#9003;</button>
+              </div>
+              <button class="btn" id="gatebtn" disabled onclick="go('p-sign')">CONTINUE</button>
+              <button class="btn quiet small" onclick="go('p-nogo')">Show the NO-GO screen</button>
+            </div>
+
+            <!-- 5 · NO-GO -->
+            <div class="pane" id="p-nogo">
+              <div class="alert danger" style="align-items:flex-start">
+                <h3 style="font-size:26px; letter-spacing:.18em">NO-GO</h3>
+                <div style="color:var(--s-ink); font-size:15px; font-weight:600; line-height:1.35">
+                  C-02 &mdash; Ensure there are no cracks
+                </div>
+                <div class="cite" style="color:var(--s-warn)">FM 4.3.2 Propellers &middot; 08:14, 2 Sep 2026</div>
+              </div>
+
+              <div class="card" style="border-color:var(--s-warn-line)">
+                <div class="k" style="margin-bottom:8px">Photograph the fault</div>
+                <div class="photos">
+                  <div>IMG_4471</div><div>IMG_4472</div><div class="add">+</div>
+                </div>
+              </div>
+
+              <div class="field">
+                <div class="k">Note</div>
+                <div class="val" style="color:var(--s-mut)">Hairline crack ~18 mm from hub, rotor 3 upper.
+                  Torque seal on the adjacent joint is intact.</div>
+              </div>
+
+              <div class="alert danger" style="padding:13px 14px">
+                <div style="color:var(--s-ink); font-size:13.5px; line-height:1.45">
+                  Confirming will set <b>HX250-0047</b> to GROUNDED and block new logbook entries
+                  until a signed Return to Service is filed.
+                </div>
+                <div class="cite" style="color:var(--s-warn)">Maintenance Manual Ch. 16</div>
+              </div>
+
+              <button class="btn bad" onclick="ground()">CONFIRM &amp; GROUND AIRCRAFT</button>
+              <button class="btn quiet small" onclick="go('p-msg')">Send to HayesX support</button>
+            </div>
+
+            <!-- 6 · SIGN -->
+            <div class="pane" id="p-sign">
+              <div>
+                <div class="h">Preflight complete</div>
+                <div class="sub">All 57 items passed &middot; 5 min 12 s</div>
+              </div>
+              <div class="rail">
+                <i class="done">A</i><i class="done">B</i><i class="done">C</i><i class="done">D</i><i class="done">E</i>
+                <i class="done">F</i><i class="done">G</i><i class="done">H</i><i class="done">I</i><i class="done">J</i>
+              </div>
+
+              <div class="card">
+                <div style="font-size:14px; line-height:1.5">
+                  I certify that I have completed the preflight inspection for
+                  <b>HX250-0047</b> in the sequence set out in the Flight Manual, and that
+                  every item passed.
+                </div>
+              </div>
+
+              <div class="sig">
+                <svg viewBox="0 0 300 52" aria-label="Pilot signature">
+                  <path d="M8 40 C 26 8, 38 6, 44 20 C 50 34, 40 44, 34 38 C 28 32, 42 16, 62 22
+                           C 82 28, 74 44, 88 40 C 102 36, 104 14, 118 18 C 132 22, 124 42, 140 38
+                           C 156 34, 158 12, 176 20 C 194 28, 186 42, 202 36 C 218 30, 226 14, 244 24
+                           C 258 32, 268 26, 288 14"
+                        fill="none" stroke="#111519" stroke-width="2.1" stroke-linecap="round"/>
+                </svg>
+                <div class="cap">Signature of pilot in command</div>
+              </div>
+
+              <div class="stamp">
+                <b>2 Sep 2026, 08:19:04 PDT</b><br>
+                36.1699&deg;N&nbsp; 115.1398&deg;W &middot; &plusmn;4 m<br>
+                Manual rev <b>A</b> &middot; checklist v1 &middot; app 1.0.0<br>
+                Valid until <b>12:19</b> (4 h)
+              </div>
+
+              <button class="btn go" onclick="fly()">SIGN &amp; START FLIGHT</button>
+            </div>
+
+            <!-- 7 · LOGBOOK -->
+            <div class="pane" id="p-log">
+              <div class="rowline">
+                <div class="grow"><div class="h">Logbook</div></div>
+                <span class="pill sky">This year</span>
+              </div>
+
+              <div class="totals">
+                <div class="top">
+                  <div><div class="fig">47</div><div class="lab">Flights</div></div>
+                  <div><div class="fig">1,284</div><div class="lab">Minutes &middot; 21:24</div></div>
+                </div>
+                <div class="foot"><span>Longest 38 &middot; avg 27</span><span>To date 112 / 3,006</span></div>
+              </div>
+
+              <div class="field"><div class="k">Search</div>
+                <div class="val" style="color:var(--s-faint)">Route, weather or notes&hellip;</div></div>
+              <div class="rowline" style="gap:6px; flex-wrap:wrap">
+                <span class="pill sky">This month</span><span class="pill" style="background:var(--s-line-2);color:var(--s-mut)">Last 30 days</span>
+                <span class="pill" style="background:var(--s-line-2);color:var(--s-mut)">Custom&hellip;</span>
+              </div>
+
+              <div class="month">September 2026</div>
+              <div class="entry">
+                <div class="date"><b>01</b>Mon</div>
+                <div class="grow"><div class="v">Jean Ridge &rarr; Jean Ridge</div>
+                  <div class="cite">CAVU, 4 kt SW &middot; J. Hayes</div></div>
+                <div style="text-align:right"><div class="min">22&prime;</div><div class="cite" style="color:var(--s-go)">&#10003;</div></div>
+              </div>
+              <div class="entry">
+                <div class="date"><b>01</b>Mon</div>
+                <div class="grow"><div class="v">Jean Ridge &rarr; Sandy Valley</div>
+                  <div class="cite">Light haze &middot; J. Hayes</div></div>
+                <div style="text-align:right"><div class="min">31&prime;</div><div class="cite" style="color:var(--s-go)">&#10003;</div></div>
+              </div>
+              <div class="month">August 2026</div>
+              <div class="entry">
+                <div class="date"><b>29</b>Fri</div>
+                <div class="grow"><div class="v">Jean Ridge &rarr; Jean Ridge</div>
+                  <div class="cite">Gusty 12 kt &middot; amended &times;1</div></div>
+                <div style="text-align:right"><div class="min">18&prime;</div><div class="cite" style="color:var(--s-go)">&#10003;</div></div>
+              </div>
+              <button class="btn small" onclick="go('p-logentry')">NEW ENTRY</button>
+            </div>
+
+            <!-- 8 · LOG ENTRY -->
+            <div class="pane" id="p-logentry">
+              <div>
+                <div class="h">New flight</div>
+                <div class="sub">Most of this is already filled in for you</div>
+              </div>
+              <div class="two">
+                <div class="field"><div class="k">Aircraft</div><div class="val">HayesX&#8209;250</div><div class="from">registry</div></div>
+                <div class="field"><div class="k">Serial no.</div><div class="val">HX250-0047</div><div class="from">registry</div></div>
+              </div>
+              <div class="field"><div class="k">Category</div><div class="val">Ultralight &mdash; FAA Part 103</div><div class="from">registry</div></div>
+              <div class="two">
+                <div class="field"><div class="k">Pilot</div><div class="val">J. Hayes</div><div class="from">account</div></div>
+                <div class="field"><div class="k">Date &amp; time</div><div class="val">2 Sep, 08:24</div><div class="from">device</div></div>
+              </div>
+              <div class="two">
+                <div class="field"><div class="k">From</div><div class="val">Jean Ridge</div></div>
+                <div class="field"><div class="k">To</div><div class="val">Sandy Valley</div></div>
+              </div>
+              <div class="two">
+                <div class="field"><div class="k">Flight time</div><div class="val">24 min</div><div class="from">flight timer</div></div>
+                <div class="field"><div class="k">Weather</div><div class="val">CAVU, 6 kt SW</div></div>
+              </div>
+              <div class="field"><div class="k">Notes</div>
+                <div class="val" style="color:var(--s-mut)">About flight or machine&hellip;</div></div>
+              <div class="card" style="border-color:var(--s-sky-line); background:var(--s-sky-bg)">
+                <div class="rowline"><span class="cite" style="color:var(--s-sky)">LINKED PREFLIGHT</span></div>
+                <div class="v" style="font-size:13.5px">2 Sep 08:19 &middot; 57/57 passed &middot; rev A</div>
+              </div>
+              <div class="card">
+                <div class="rowline" style="gap:10px; align-items:flex-start">
+                  <div style="width:22px;height:22px;border-radius:5px;background:var(--s-go);color:#fff;display:grid;place-items:center;flex:none;font-size:13px">&#10003;</div>
+                  <div style="font-size:13.5px; line-height:1.45">I certify that the information in this
+                    logbook entry is complete and accurate.</div>
+                </div>
+              </div>
+              <button class="btn go" onclick="go('p-log')">SIGN &amp; LOCK ENTRY</button>
+            </div>
+
+            <!-- 9 · MANUALS -->
+            <div class="pane" id="p-man">
+              <div class="h">Manuals</div>
+              <button class="btn bad" onclick="go('p-emg')">&#9888;&nbsp; EMERGENCY PROCEDURES</button>
+              <div class="field"><div class="k">Search both manuals</div>
+                <div class="val" style="color:var(--s-faint)">e.g. &ldquo;thermal runaway&rdquo;, &ldquo;QS12&rdquo;&hellip;</div></div>
+
+              <div class="card">
+                <div class="rowline">
+                  <div class="grow">
+                    <div class="v" style="font-size:15px">Flight Manual</div>
+                    <div class="cite">HayesX-250-FM-001 &middot; Rev A &middot; 2026 &middot; 5 chapters</div>
+                  </div>
+                  <span class="pill go">Offline</span>
+                </div>
+              </div>
+              <div class="card">
+                <div class="rowline">
+                  <div class="grow">
+                    <div class="v" style="font-size:15px">Maintenance Manual</div>
+                    <div class="cite">16 chapters &middot; EN / &#20013;&#25991; &middot; 11.8 MB</div>
+                  </div>
+                  <span class="pill sky">Download</span>
+                </div>
+              </div>
+
+              <div class="card" style="border-color:var(--s-caut-line); background:var(--s-caut-bg)">
+                <div class="rowline"><span class="cite" style="color:var(--s-caut)">REVISION NOTICE</span></div>
+                <div class="v" style="font-size:13.5px; margin-top:3px">Revision B is available for review</div>
+                <div class="cite" style="margin-top:2px">Preflight is blocked until acknowledged &mdash; FM 4.2</div>
+              </div>
+
+              <div class="list">
+                <div class="r"><div class="grow"><div class="v">Bookmarks</div>
+                  <div class="cite">2.5 Battery &middot; 4.4.2 QS12 &middot; App. A intervals</div></div><span class="chev">&rsaquo;</span></div>
+                <div class="r"><div class="grow"><div class="v">Operating limitations</div>
+                  <div class="cite">Chapter 2</div></div><span class="chev">&rsaquo;</span></div>
+              </div>
+            </div>
+
+            <!-- 10 · EMERGENCY -->
+            <div class="pane" id="p-emg">
+              <div>
+                <div class="h" style="color:var(--s-warn)">Emergency procedures</div>
+                <div class="sub"><span class="cite">FM Chapter 3</span> &middot; works offline</div>
+              </div>
+              <div class="prio">
+                <div class="cite" style="color:var(--s-caut); font-weight:600">RESPONSE PRIORITY &middot; FM 3.2</div>
+                <ol>
+                  <li>Maintain vehicle control</li>
+                  <li>Select safe landing area</li>
+                  <li>AUTO LAND</li>
+                  <li>RETURN TO HOME</li>
+                  <li>Manual landing</li>
+                  <li>BRS deployment</li>
+                </ol>
+              </div>
+              <div class="emg">
+                <a href="#"><div class="n">3.3</div><div class="t">Low battery &le;35%</div></a>
+                <a href="#"><div class="n">3.4</div><div class="t">Emergency battery &le;30%</div></a>
+                <a href="#"><div class="n">3.5</div><div class="t">Single motor failure</div></a>
+                <a href="#"><div class="n">3.6</div><div class="t">Multiple motor failure</div></a>
+                <a href="#"><div class="n">3.7</div><div class="t">Flight control failure</div></a>
+                <a href="#"><div class="n">3.8</div><div class="t">Joystick failure</div></a>
+                <a href="#"><div class="n">3.9</div><div class="t">GPS signal loss</div></a>
+                <a href="#"><div class="n">3.10</div><div class="t">Battery overheating</div></a>
+                <a href="#"><div class="n">3.11</div><div class="t">Battery thermal runaway</div></a>
+                <a href="#"><div class="n">3.12</div><div class="t">Auto flight failure</div></a>
+                <a href="#"><div class="n">3.13</div><div class="t">BRS deployment</div></a>
+                <a href="#"><div class="n">3.14</div><div class="t">Ditching</div></a>
+                <a href="#"><div class="n">3.15</div><div class="t">Pilot incapacitation</div></a>
+                <a href="#"><div class="n">3.16</div><div class="t">Post hard landing</div></a>
+              </div>
+              <div class="cite" style="text-align:center; padding:4px 8px 0">
+                Ground reference only. Do not operate a device in flight. &mdash; FM 4.1
+              </div>
+            </div>
+
+            <!-- 11 · MESSAGES -->
+            <div class="pane" id="p-msg">
+              <div class="h">Messages</div>
+              <div class="msg crit">
+                <div class="rowline"><span class="pill bad">Safety bulletin</span>
+                  <span class="when" style="margin-left:auto">28 Aug</span></div>
+                <div class="v">SB-2026-03 &middot; Propeller tie wire inspection</div>
+                <p>Inspect tie wire fixing on all eight rotors before the next flight.
+                   Applies to S/N HX250-0001 through 0089.</p>
+                <button class="btn small bad" style="margin-top:4px">ACKNOWLEDGE</button>
+              </div>
+              <div class="msg">
+                <div class="rowline"><span class="pill caut">Revision</span>
+                  <span class="when" style="margin-left:auto">26 Aug</span></div>
+                <div class="v">Flight Manual Revision B</div>
+                <p>Chapter 4 preflight sequence clarified. Review required before your next flight.</p>
+              </div>
+              <div class="msg">
+                <div class="rowline"><span class="pill sky">Support</span>
+                  <span class="when" style="margin-left:auto">Yesterday</span></div>
+                <div class="v">Re: propeller crack, HX250-0047</div>
+                <p>Thanks for the photos &mdash; that rotor is condemned. A replacement ships
+                   today. Keep the aircraft grounded until the RTS is signed.</p>
+                <div class="cite">&#128206; IMG_4471.jpg &middot; defect DFX-0112</div>
+              </div>
+            </div>
+
+            <!-- 12 · ACCOUNT -->
+            <div class="pane" id="p-acct">
+              <div class="h">Account</div>
+              <div class="card">
+                <div class="rowline" style="gap:12px">
+                  <div style="width:46px;height:46px;border-radius:50%;background:var(--s-sky-bg);color:var(--s-sky);display:grid;place-items:center;font-family:Archivo;font-weight:700;font-size:17px;flex:none">JH</div>
+                  <div class="grow"><div class="v" style="font-size:16px">J. Hayes</div>
+                    <div class="cite">jhayes@hayesx.com &middot; +1 702 555 0148</div></div>
+                </div>
+              </div>
+
+              <div class="k" style="padding-left:2px">Aircraft</div>
+              <div class="card">
+                <div class="rowline">
+                  <div class="grow"><div class="v">HayesX&#8209;250</div>
+                    <div class="cite">S/N HX250-0047 &middot; in service 12 Mar 2026</div></div>
+                  <span class="pill go">Airworthy</span>
+                </div>
+                <div class="hr" style="margin:10px 0"></div>
+                <div class="cite">Serial number is entered once at setup and reused on every record.</div>
+              </div>
+
+              <div class="k" style="padding-left:2px">Signature</div>
+              <div class="sig">
+                <svg viewBox="0 0 300 52" aria-label="Stored signature">
+                  <path d="M8 40 C 26 8, 38 6, 44 20 C 50 34, 40 44, 34 38 C 28 32, 42 16, 62 22
+                           C 82 28, 74 44, 88 40 C 102 36, 104 14, 118 18 C 132 22, 124 42, 140 38
+                           C 156 34, 158 12, 176 20 C 194 28, 186 42, 202 36 C 218 30, 226 14, 244 24
+                           C 258 32, 268 26, 288 14"
+                        fill="none" stroke="#111519" stroke-width="2.1" stroke-linecap="round"/>
+                </svg>
+                <div class="cap">Tap to redraw</div>
+              </div>
+
+              <div class="list">
+                <div class="r"><div class="grow"><div class="v">Units</div></div>
+                  <span class="cite">Metric</span><span class="chev">&rsaquo;</span></div>
+                <div class="r"><div class="grow"><div class="v">Theme</div></div>
+                  <span class="cite">Daylight</span><span class="chev">&rsaquo;</span></div>
+                <div class="r"><div class="grow"><div class="v">Language</div></div>
+                  <span class="cite">English</span><span class="chev">&rsaquo;</span></div>
+                <div class="r"><div class="grow"><div class="v">Notifications</div>
+                  <div class="cite">Safety bulletins always on</div></div><span class="chev">&rsaquo;</span></div>
+              </div>
+
+              <div class="list">
+                <div class="r"><div class="grow"><div class="v">Data &amp; sync</div>
+                  <div class="cite">2 items pending &middot; last sync 08:02</div></div>
+                  <span class="pill caut">Offline</span></div>
+                <div class="r"><div class="grow"><div class="v">Export all data</div></div><span class="chev">&rsaquo;</span></div>
+                <div class="r"><div class="grow"><div class="v">FAA Part 103 statement</div>
+                  <div class="cite">FM 1.4 &middot; terms &middot; privacy</div></div><span class="chev">&rsaquo;</span></div>
+              </div>
+            </div>
+
+          </div><!-- /body -->
+
+          <nav class="tabs" aria-label="App tabs">
+            <button class="tab" data-tab="p-home" aria-current="true" onclick="go('p-home')">
+              <svg viewBox="0 0 24 24"><path d="M4 12.5 9 17.5 20 6.5"/></svg><span>Preflight</span></button>
+            <button class="tab" data-tab="p-log" onclick="go('p-log')">
+              <svg viewBox="0 0 24 24"><path d="M4 5h16v14H4z"/><path d="M4 9h16M9 9v10"/></svg><span>Logbook</span></button>
+            <button class="tab" data-tab="p-man" onclick="go('p-man')">
+              <svg viewBox="0 0 24 24"><path d="M4 5.5A2 2 0 0 1 6 4h5v16H6a2 2 0 0 0-2 2z"/><path d="M20 5.5A2 2 0 0 0 18 4h-5v16h5a2 2 0 0 1 2 2z"/></svg><span>Manuals</span></button>
+            <button class="tab" data-tab="p-msg" onclick="go('p-msg')">
+              <svg viewBox="0 0 24 24"><path d="M4 6h16v11H9l-5 4z"/></svg><span>Messages</span>
+              <i class="badge">2</i></button>
+            <button class="tab" data-tab="p-acct" onclick="go('p-acct')">
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg><span>Account</span></button>
+          </nav>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ RAIL ══════════════════════ -->
+    <div class="rail-col">
+
+      <div class="panel" id="note">
+        <h2>What you're looking at</h2>
+        <h3 id="n-title">Preflight home</h3>
+        <p class="lede" id="n-lede"></p>
+        <ul id="n-list"></ul>
+      </div>
+
+      <div class="panel">
+        <h2>Screens</h2>
+        <div class="idx" id="idx">
+          <section><div class="grp">Preflight</div><div class="row">
+            <button data-go="p-home">Home</button>
+            <button data-go="p-check">Checklist</button>
+            <button data-go="p-warn">HV warning</button>
+            <button data-go="p-gate">Battery gate</button>
+            <button data-go="p-nogo">NO-GO</button>
+            <button data-go="p-sign">Sign &amp; fly</button>
+          </div></section>
+          <section><div class="grp">Logbook</div><div class="row">
+            <button data-go="p-log">Entries &amp; totals</button>
+            <button data-go="p-logentry">New entry</button>
+          </div></section>
+          <section><div class="grp">Manuals</div><div class="row">
+            <button data-go="p-man">Library</button>
+            <button data-go="p-emg">Emergency</button>
+          </div></section>
+          <section><div class="grp">Messages &amp; account</div><div class="row">
+            <button data-go="p-msg">Messages</button>
+            <button data-go="p-acct">Account</button>
+          </div></section>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2>Limits the app enforces</h2>
+        <table class="limits">
+          <thead><tr><th>Limit</th><th>Value</th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td>Battery before takeoff</td><td>&ge; 95 %</td><td>FM 2.5</td></tr>
+            <tr><td>Battery before landing</td><td>&ge; 35 %</td><td>FM 2.5</td></tr>
+            <tr><td>Emergency battery warning</td><td>30 %</td><td>FM 2.5</td></tr>
+            <tr><td>Velocity never exceed</td><td>100 km/h</td><td>FM 2.1</td></tr>
+            <tr><td>Max takeoff weight</td><td>216 kg</td><td>FM 2.2</td></tr>
+            <tr><td>Max pilot weight</td><td>100 kg</td><td>FM 2.2</td></tr>
+            <tr><td>Max roll / pitch</td><td>30&deg;</td><td>FM 2.4</td></tr>
+            <tr><td>Max altitude</td><td>1,500 ft AGL</td><td>FM 1.3</td></tr>
+            <tr><td>Max flight time</td><td>25 min</td><td>FM 1.3</td></tr>
+            <tr><td>BRS min deploy height</td><td>10 m AGL</td><td>FM 2.6</td></tr>
+          </tbody>
+        </table>
+        <p style="margin:13px 0 0; color:var(--mut); font-size:13.5px">
+          Every number is read from a single limits file, cited on screen, and changes
+          when the manual is revised &mdash; never hard-coded into a component.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="foot">
+    <span class="mono">DRAFT &middot; NOT FOR OPERATIONAL USE</span>
+    <span>Two checklist items are unresolved pending HayesX engineering &mdash; see open questions Q1 and Q2.</span>
+  </footer>
+</div>
+
+<script>
+const NOTES = {
+  'p-home':{t:'Preflight home',l:'The first thing a pilot sees at the aircraft. One green banner, one big button, and the answer to “am I allowed to fly this today?”',
+    n:[['Sitemap','Tab one of five, taken from HayesX Mobile App.xlsx'],
+       ['FM 4.2','The manual-review row is what makes checklist item A-01 truthful rather than a checkbox'],
+       ['Design','56 px minimum targets and a daylight palette — Part 103 is daytime-only operations']]},
+  'p-check':{t:'Checklist section',l:'One section per screen, ten sections, in Flight Manual order. Tap the buttons — the items are live, and NO-GO opens the gate.',
+    n:[['FM 4.1','“It is important to perform all procedures in the sequence outlined” — so the UI enforces order and never lets you skip'],
+       ['Design','Two states only. No “N/A”, no batch-tick, no way to sign off a section you didn’t read'],
+       ['Data','All 57 items live in preflight-checklist.json, each cited to its manual section']]},
+  'p-warn':{t:'High-voltage interstitial',l:'Full-screen and unavoidable before the pilot touches a 108 V DC connector.',
+    n:[['FM 4.4.3','The three prohibitions verbatim — not buried in a collapsed panel'],
+       ['Q2','The manual prints the connector inspection after the connection sequence. Ordered inspection-first here, pending confirmation']]},
+  'p-gate':{t:'Battery gate',l:'Item J-05 is the one numeric check in the whole list. 92% is shown so you can see the gate refuse.',
+    n:[['FM 4.7 / 2.5','Minimum 95% before takeoff, quoted on screen with its section'],
+       ['Design','Keypad, not a slider — the pilot is copying a number off the PFD'],
+       ['Try it','Type 96 and the gate opens']]},
+  'p-nogo':{t:'NO-GO',l:'The moment that makes the app worth more than a laminated card. There is no “continue anyway” button anywhere on this screen.',
+    n:[['Rule','Any no-go creates a defect, grounds the aircraft app-wide, and blocks the logbook'],
+       ['Maint. Ch. 16','Un-grounding requires a signed Return to Service naming the corrective action and any replaced part'],
+       ['Metric','If nobody ever fails an item, pilots are tapping through and the product is worse than paper']]},
+  'p-sign':{t:'Sign and start flight',l:'Signing freezes the record: time, GPS, manual revision and app version, all snapshotted.',
+    n:[['Data','Signed records are append-only. Corrections are linked amendments, enforced by a database trigger'],
+       ['Q3','The 4-hour validity window is proposed, not from the manual — needs HayesX confirmation'],
+       ['Flow','Start Flight runs the timer that pre-fills the logbook entry']]},
+  'p-log':{t:'Logbook entries and totals',l:'The totals panel is the paper logbook’s page-totals block, which is the part pilots actually hand-tally today.',
+    n:[['Brief','“Search previous logs based on the dates” and “tally total number of flights and total flight times in minutes”'],
+       ['Paper','“Totals to date” mirrors the printed book — and becomes the input to Phase 2 maintenance intervals'],
+       ['Design','Tabular figures so columns of minutes line up']]},
+  'p-logentry':{t:'New flight entry',l:'Nine required fields, of which the pilot types three. Everything else comes from the registry, the device or the flight timer.',
+    n:[['Brief','Serial number “only need to populate it once” — entered at setup, never retyped'],
+       ['Brief','Pilot defaults to the account owner but can be overridden for a guest pilot'],
+       ['Q5','The certification wording needs legal sign-off before launch']]},
+  'p-man':{t:'Manual library',l:'Both manuals, offline, with the revision you hold shown on the card.',
+    n:[['§4.3','Ship structured content, not PDFs — phones in sunlight, deep links, full-text search, real tables'],
+       ['FM 4.2','A new revision blocks preflight until acknowledged, which is what item A-01 actually asserts'],
+       ['Q6','The Maintenance Manual is branded “PowerHub SkyLo V1” throughout — needs resolving before it ships in a HayesX app']]},
+  'p-emg':{t:'Emergency procedures',l:'All sixteen from Chapter 3 behind one red button, offline, largest legible type, no scrolling to find one.',
+    n:[['FM 3.2','The response priority is pinned above everything because it governs all sixteen'],
+       ['FM 3.5 / 3.8 / 3.12','Procedures ending “no further flight allowed” offer a one-tap Ground this aircraft'],
+       ['Q4','Ground reference only in v1.0 — FM 4.1 confines the pilot to the roll cage']]},
+  'p-msg':{t:'Messages and bulletins',l:'How HayesX reaches every pilot: safety bulletins one way, support both ways, defect photos attached from the no-go flow.',
+    n:[['Design','A bulletin can require acknowledgement, and until it gets one it blocks the preflight tab'],
+       ['§4.1','Web push on iOS needs the app installed to the home screen — email and SMS back it up']]},
+  'p-acct':{t:'Account and aircraft registry',l:'The quiet tab that makes the loud ones work: the serial number, the signature and the units everything else reuses.',
+    n:[['Brief','Aircraft serial is entered once here and snapshotted onto every record'],
+       ['Design','One signature, drawn at setup, copied by value onto each signed record so history never changes'],
+       ['Q7','Who can read a pilot’s flight logs is an open decision — it shapes the access rules']]}
+};
+
+const TABMAP = {'p-home':'p-home','p-check':'p-home','p-warn':'p-home','p-gate':'p-home',
+  'p-nogo':'p-home','p-sign':'p-home','p-log':'p-log','p-logentry':'p-log',
+  'p-man':'p-man','p-emg':'p-man','p-msg':'p-msg','p-acct':'p-acct'};
+
+function go(id){
+  document.querySelectorAll('.pane').forEach(p=>p.classList.toggle('on', p.id===id));
+  document.getElementById('body').scrollTop = 0;
+  const tab = TABMAP[id];
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-current', String(t.dataset.tab===tab)));
+  document.querySelectorAll('#idx button').forEach(b=>b.setAttribute('aria-current', String(b.dataset.go===id)));
+  const n = NOTES[id]; if(!n) return;
+  document.getElementById('n-title').textContent = n.t;
+  document.getElementById('n-lede').textContent = n.l;
+  document.getElementById('n-list').innerHTML =
+    n.n.map(([s,x])=>'<li><span class="src">'+s+'</span><span>'+x+'</span></li>').join('');
+}
+document.querySelectorAll('#idx button').forEach(b=>b.addEventListener('click',()=>go(b.dataset.go)));
+
+/* checklist items */
+function tally(){
+  const items=[...document.querySelectorAll('#p-check .item')];
+  const done=items.filter(i=>i.dataset.state).length;
+  document.getElementById('ctally').textContent = done+' of '+items.length+' answered';
+  document.getElementById('cnext').disabled = done<items.length;
+}
+document.querySelectorAll('#p-check .item').forEach(item=>{
+  item.querySelector('.ok').addEventListener('click',()=>{item.dataset.state='pass'; tally();});
+  item.querySelector('.no').addEventListener('click',()=>{item.dataset.state='nogo'; tally(); setTimeout(()=>go('p-nogo'),260);});
+});
+
+/* battery gate */
+let buf='92';
+function key(k){
+  if(k==='c') buf='';
+  else if(k==='x') buf=buf.slice(0,-1);
+  else if(buf.length<3) buf=(buf==='0'?'':buf)+k;
+  const v = buf===''?0:parseInt(buf,10);
+  const ok = v>=95 && v<=100;
+  document.getElementById('gateval').textContent = buf===''?'—':buf;
+  const box=document.getElementById('gatebox'), msg=document.getElementById('gatemsg'),
+        num=box.querySelector('.num'), btn=document.getElementById('gatebtn');
+  box.style.borderColor = ok?'var(--s-go-line)':'var(--s-warn-line)';
+  num.style.color = ok?'var(--s-go)':'var(--s-warn)';
+  msg.style.color = ok?'var(--s-go)':'var(--s-warn)';
+  msg.textContent = ok?'MEETS THE 95% MINIMUM BEFORE TAKEOFF':'BELOW THE 95% MINIMUM BEFORE TAKEOFF';
+  btn.disabled = !ok;
+}
+
+/* banner states */
+function setBanner(cls, text, sn){
+  const b=document.getElementById('banner');
+  b.className='banner '+cls;
+  document.getElementById('bantext').textContent=text;
+  document.getElementById('bansn').textContent=sn;
+}
+function ground(){
+  setBanner('bad','GROUNDED — propeller crack C-02','HX250-0047');
+  go('p-msg');
+}
+function fly(){
+  setBanner('act','FLIGHT OPEN — 00:04:11','HX250-0047');
+  go('p-logentry');
+}
+
+go('p-home');
+</script>
