@@ -1,0 +1,224 @@
+{
+  "$comment": "HayesX-250 preflight checklist, transcribed from Flight Manual HayesX-250-FM-001 Rev A, Chapter 4. Item text is verbatim from the manual except where 'normalised' is true. This file is the single source of truth for the app's checklist; the app must render it, never hard-code items.",
+  "schemaVersion": 1,
+  "aircraftModel": "HayesX-250",
+  "sourceDocument": {
+    "title": "HayesX-250 Flight Manual",
+    "documentNumber": "HayesX-250-FM-001",
+    "revision": "A",
+    "issueDate": "2026",
+    "chapter": 4
+  },
+  "rules": {
+    "enforceSectionOrder": true,
+    "allowSkip": false,
+    "allowNotApplicable": false,
+    "anyNoGoGroundsAircraft": true,
+    "validityMinutes": 240,
+    "validityNote": "Proposed, not from the manual. See docs/06-open-questions.md Q3."
+  },
+  "sections": [
+    {
+      "id": "A",
+      "title": "Preflight Preparation",
+      "fmSection": "4.2",
+      "intro": "The pilot shall verify the following. These are legal declarations by the pilot in command.",
+      "items": [
+        { "id": "A-01", "type": "declaration", "text": "Flight Manual has been reviewed", "linkedFeature": "manual_revision_acknowledgement" },
+        { "id": "A-02", "type": "declaration", "text": "He/she is physically fit for flight" },
+        { "id": "A-03", "type": "declaration", "text": "Is not under the influence of alcohol or drugs" },
+        { "id": "A-04", "type": "declaration", "text": "The weather suitable for VFR", "ref": "FM 2.7 — VMC only. Prohibited: cloud, dense fog, heavy rain, thunderstorm, known icing." },
+        { "id": "A-05", "type": "declaration", "text": "It is permissible to fly in the proposed area", "ref": "FM 2.7 — no-fly zones, restricted areas, danger areas, TFRs, congested areas." },
+        { "id": "A-06", "type": "declaration", "text": "The battery is fully charged", "ref": "FM 2.5 — minimum 95% before takeoff; verified numerically at J-05." },
+        { "id": "A-07", "type": "declaration", "text": "The flight is fully planned" }
+      ]
+    },
+    {
+      "id": "B",
+      "title": "Aircraft Structural Checks",
+      "fmSection": "4.3.1",
+      "items": [
+        { "id": "B-01", "type": "check", "text": "Ensure no structural cracks" },
+        { "id": "B-02", "type": "check", "text": "Check cantilever arms are undamaged" },
+        { "id": "B-03", "type": "check", "text": "Ensure cantilever arms secure and rigid at joints" },
+        { "id": "B-04", "type": "check", "text": "Landing gear serviceable" },
+        { "id": "B-05", "type": "check", "text": "All critical fasteners marked with red torque-seal paint are secure and show no signs of loosening, fracture, or misalignment" }
+      ]
+    },
+    {
+      "id": "C",
+      "title": "Propellers",
+      "fmSection": "4.3.2",
+      "items": [
+        { "id": "C-01", "type": "check", "text": "Check all propellers are intact" },
+        { "id": "C-02", "type": "check", "text": "Ensure there are no cracks" },
+        { "id": "C-03", "type": "check", "text": "Check to ensure no deformation" },
+        { "id": "C-04", "type": "check", "text": "Make sure they are securely attached" },
+        { "id": "C-05", "type": "check", "text": "Check propeller tie wire fixing is intact" },
+        { "id": "C-06", "type": "check", "text": "Check all marked joints show no evidence of movement or misalignment" }
+      ]
+    },
+    {
+      "id": "D",
+      "title": "Motors",
+      "fmSection": "4.3.3",
+      "items": [
+        { "id": "D-01", "type": "check", "text": "Ensure motors rotate freely" },
+        { "id": "D-02", "type": "check", "text": "Check to ensure no excessive play" },
+        { "id": "D-03", "type": "check", "text": "Ensure there are no foreign objects" }
+      ]
+    },
+    {
+      "id": "E",
+      "title": "Battery System",
+      "fmSection": "4.3.4",
+      "items": [
+        { "id": "E-01", "type": "check", "text": "Secure front battery", "normalised": true, "originalText": "Secure front batter" },
+        { "id": "E-02", "type": "check", "text": "Secure rear battery" },
+        { "id": "E-03", "type": "check", "text": "Check to ensure no bulge in the battery" },
+        { "id": "E-04", "type": "check", "text": "Check for any physical damage" }
+      ]
+    },
+    {
+      "id": "F",
+      "title": "Ballistic Recovery System (BRS) / Parachute",
+      "fmSection": "4.3.5",
+      "warningBefore": {
+        "level": "warning",
+        "fmSection": "2.6",
+        "text": "Once activated, parachute deployment cannot be cancelled. The GBS 10M parachute has a 6-year validity period. This rescue system is a pyrotechnic device and must be disassembled or repaired by authorised personnel only."
+      },
+      "items": [
+        {
+          "id": "F-01",
+          "type": "check",
+          "text": "Safety pin removed",
+          "unresolved": true,
+          "unresolvedNote": "The source document carries an unanswered author query: 'Question for Ben — should the safety pin be removed before flight?' Do not ship this item until HayesX confirms the intended state. See docs/06-open-questions.md Q1."
+        },
+        { "id": "F-02", "type": "check", "text": "System on standby" },
+        { "id": "F-03", "type": "check", "text": "Activation handle unobstructed", "ref": "FM 2.6 — activation handle is on the pilot's left side." }
+      ]
+    },
+    {
+      "id": "G",
+      "title": "Power-Up Procedure",
+      "fmSection": "4.4",
+      "intro": "HayesX-250 uses a dual 108 V DC electrical power system. The front and rear battery packs connect to the main power system through QS12 high-voltage connectors. High-voltage system maintenance shall only be performed by trained personnel.",
+      "warningBefore": {
+        "level": "danger",
+        "fmSection": "4.4.3",
+        "text": "DO NOT connect or disconnect QS12 connectors under electrical load.\nDO NOT short-circuit battery terminals.\nDO NOT operate with damaged connectors."
+      },
+      "subsections": [
+        {
+          "id": "G1",
+          "title": "High-Voltage Connector Inspection",
+          "fmSection": "4.4.2",
+          "orderNote": "The manual prints this inspection after the connection sequence, but it must be performed before connecting. Ordered inspection-first here — confirm with HayesX. See docs/06-open-questions.md Q2.",
+          "items": [
+            { "id": "G-01", "type": "check", "text": "QS12 connectors undamaged and in good condition" },
+            { "id": "G-02", "type": "check", "text": "No burn marks" },
+            { "id": "G-03", "type": "check", "text": "No thermal deformation" },
+            { "id": "G-04", "type": "check", "text": "No mechanical damage" },
+            { "id": "G-05", "type": "check", "text": "Locking mechanism is normal and functional" },
+            { "id": "G-06", "type": "check", "text": "High-voltage cable insulation intact" },
+            { "id": "G-07", "type": "check", "text": "No exposed conductors" }
+          ]
+        },
+        {
+          "id": "G2",
+          "title": "Main Power Connection",
+          "fmSection": "4.4",
+          "sequential": true,
+          "sequentialNote": "Steps must be confirmed one at a time in this order. The order is the safety property.",
+          "items": [
+            { "id": "G-08", "type": "sequence", "text": "Confirm both main power connectors are disconnected" },
+            { "id": "G-09", "type": "sequence", "text": "Connect Front Battery QS12 Main Power Connector" },
+            { "id": "G-10", "type": "sequence", "text": "Verify secure connection" },
+            { "id": "G-11", "type": "sequence", "text": "Connect Rear Battery QS12 Main Power Connector" },
+            { "id": "G-12", "type": "sequence", "text": "Verify secure connection" }
+          ]
+        }
+      ],
+      "abnormalConditions": {
+        "fmSection": "4.4.4",
+        "trigger": "Available as a persistent action from this section onward.",
+        "conditions": [
+          "Abnormal arcing",
+          "Burning smell",
+          "Connector overheating",
+          "System startup failure"
+        ],
+        "action": "Disconnect power immediately and discontinue operation.",
+        "appAction": "no_go"
+      }
+    },
+    {
+      "id": "H",
+      "title": "System Initialisation",
+      "fmSection": "4.5",
+      "intro": "After both battery systems are connected, the Flight Control System powers up automatically.",
+      "items": [
+        { "id": "H-01", "type": "check", "text": "Flight Control System ON" },
+        { "id": "H-02", "type": "check", "text": "PFD ON" },
+        { "id": "H-03", "type": "check", "text": "Flight Data Recorder ON" },
+        { "id": "H-04", "type": "check", "text": "Wait for self-test completion" }
+      ]
+    },
+    {
+      "id": "I",
+      "title": "Propulsion System Check",
+      "fmSection": "4.6",
+      "intro": "Inspect all eight propulsion arm control modules.",
+      "items": [
+        { "id": "I-01", "type": "check", "text": "Eight green status indicators illuminated continuously" },
+        { "id": "I-02", "type": "check", "text": "No red fault indicators" },
+        { "id": "I-03", "type": "check", "text": "No warning tones" },
+        { "id": "I-04", "type": "check", "text": "No fault messages displayed" },
+        { "id": "I-05", "type": "check", "text": "Motor response normal", "fmSection": "4.6.1" },
+        { "id": "I-06", "type": "check", "text": "No abnormal vibration", "fmSection": "4.6.1" },
+        { "id": "I-07", "type": "check", "text": "No abnormal noise", "fmSection": "4.6.1" }
+      ]
+    },
+    {
+      "id": "J",
+      "title": "Boarding Procedure",
+      "fmSection": "4.7",
+      "intro": "All pilot operations and movements must be within the Formula 1 inspired roll cage. No arm movements are permitted outside the roll cage (FM 4.1).",
+      "items": [
+        { "id": "J-01", "type": "check", "text": "Ensure aircraft is stable and secure before boarding" },
+        { "id": "J-02", "type": "check", "text": "Board aircraft" },
+        { "id": "J-03", "type": "check", "text": "Fasten restraint harness" },
+        { "id": "J-04", "type": "check", "text": "Check PFD display" },
+        {
+          "id": "J-05",
+          "type": "numeric_gate",
+          "text": "Battery charge",
+          "unit": "%",
+          "min": 95,
+          "comparison": "gte",
+          "failText": "Battery charge is below the 95% minimum required before takeoff.",
+          "ref": "FM 4.7 and FM 2.5 — Minimum Battery Before Takeoff 95%."
+        },
+        { "id": "J-06", "type": "check", "text": "No error warnings" }
+      ]
+    }
+  ],
+  "limitsReference": {
+    "$comment": "Surfaced in-app next to the relevant checks and in the Manuals tab. Sourced from Flight Manual Chapter 2.",
+    "batteryMinimumBeforeTakeoffPercent": { "value": 95, "fmSection": "2.5" },
+    "batteryMinimumBeforeLandingPercent": { "value": 35, "fmSection": "2.5" },
+    "batteryEmergencyWarningPercent": { "value": 30, "fmSection": "2.5" },
+    "vneKmh": { "value": 100, "fmSection": "2.1" },
+    "recommendedCruiseKmh": { "value": 40, "fmSection": "2.1" },
+    "maximumTakeoffWeightKg": { "value": 216, "fmSection": "2.2" },
+    "maximumPilotWeightKg": { "value": 100, "fmSection": "2.2" },
+    "maximumRollAngleDeg": { "value": 30, "fmSection": "2.4" },
+    "maximumPitchAngleDeg": { "value": 30, "fmSection": "2.4" },
+    "maximumAltitudeAglFt": { "value": 1500, "fmSection": "1.3" },
+    "maximumFlightTimeMinutes": { "value": 25, "fmSection": "1.3" },
+    "brsMaxDeploymentSpeedKmh": { "value": 100, "fmSection": "2.6" },
+    "brsMinDeploymentHeightAglM": { "value": 10, "fmSection": "2.6" }
+  }
+}
