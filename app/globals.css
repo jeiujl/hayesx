@@ -1,0 +1,100 @@
+@import "tailwindcss";
+
+/*
+ * Palette and type carried over from prototype/index.html.
+ * The app commits to a light "Daylight" theme: FAA Part 103 permits day
+ * operations only, so this is used outdoors in direct sun. See docs/01 §1.4.
+ */
+@theme {
+  --color-bg: #fbfbf9;
+  --color-card: #ffffff;
+  --color-ink: #111519;
+  --color-mut: #5e6873;
+  --color-faint: #8b95a0;
+  --color-line: #e1e5e9;
+  --color-line2: #edf0f2;
+
+  --color-go: #0e7a3c;
+  --color-go-bg: #e3f3e9;
+  --color-go-line: #b9e0c8;
+
+  --color-warn: #b3211c;
+  --color-warn-bg: #fbe9e7;
+  --color-warn-line: #f0c4c0;
+
+  --color-caut: #96650a;
+  --color-caut-bg: #fdf3de;
+  --color-caut-line: #efdcae;
+
+  --color-sky: #1f5f8b;
+  --color-sky-bg: #e7f0f6;
+  --color-sky-line: #c3d9e8;
+
+  --font-sans: "Public Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: Archivo, ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+/* Thumb-first: no element that answers a checklist item is smaller than this. */
+@utility tap {
+  min-height: 56px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-sky);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+/* Keep content clear of the home indicator on installed iOS PWAs. */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise {
+  animation: rise 0.2s ease-out;
+}
+
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+}
+/* 16px minimum stops iOS Safari zooming the viewport on focus. */
+input,
+textarea {
+  font-size: 16px;
+}

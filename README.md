@@ -13,6 +13,61 @@ The app has five tabs, taken from the `HayesX Mobile App.xlsx` sitemap:
 | **Messages** | Support thread and safety/service bulletins from HayesX |
 | **Account** | Pilot profile, aircraft registry (serial no.), signature, units, sync |
 
+## The app
+
+A **Next.js 15 PWA**, local-first: every screen reads and writes IndexedDB in
+the browser, so the whole app works with the radio off — which is the normal
+case at a Part 103 field, not the edge case.
+
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm run build && npm start
+npm run test:e2e   # 22-step end-to-end run (needs a build running)
+```
+
+Deploying to Vercel needs no configuration: import the repo and it builds. There
+is no database to provision and no environment variable to set — see
+[`docs/04-tech-stack.md`](docs/04-tech-stack.md) for how to swap the local store
+for Supabase when you want records to sync across devices.
+
+### What is built
+
+| Area | State |
+|---|---|
+| Onboarding — pilot, airframe (serial entered once), signature | ✅ |
+| Preflight run — all 57 items, 10 sections, enforced order | ✅ |
+| Warning interstitials (FM 4.4.3), sequential power-up, abnormal conditions | ✅ |
+| Battery gate — numeric, refuses below 95% with the FM citation | ✅ |
+| NO-GO → photo + note → defect → aircraft grounded app-wide | ✅ |
+| Return to Service — the only route back to airworthy | ✅ |
+| Sign preflight — time, GPS, manual revision, immutable | ✅ |
+| Flight timer → pre-filled logbook entry | ✅ |
+| Logbook — 9 fields, certify + sign, locked, amendments | ✅ |
+| Date-range search and flight/minute totals | ✅ |
+| Manuals — chapters, search, Ch. 2 limits table | ✅ |
+| Emergency procedures — all 16 from FM Ch. 3, offline | ✅ |
+| Messages — bulletins with required acknowledgement | ✅ |
+| Account — profile, registry, signature, export, reset | ✅ |
+| Multi-device sync, push notifications, maintenance tracking | Phase 2 |
+
+The safety rules from [`docs/03-data-model.md`](docs/03-data-model.md) §3.3 live
+in [`lib/repo.ts`](lib/repo.ts), not in the screens, so no UI path can produce an
+invalid record. [`tests/e2e.mjs`](tests/e2e.mjs) proves each one.
+
+### Code map
+
+| Path | What it is |
+|---|---|
+| `app/(app)/` | The five tabs |
+| `app/onboarding/` | First-run setup |
+| `lib/checklist.ts` | Loads and validates `data/preflight-checklist.json` |
+| `lib/repo.ts` | Every safety rule, enforced in one place |
+| `lib/db.ts` | Dexie/IndexedDB schema |
+| `lib/limits.ts` | Flight Manual limits, read from the data file |
+| `lib/emergency.ts` | FM Ch. 3 procedures |
+| `components/` | App shell, signature pad, UI primitives |
+
 ## What's in this repo
 
 | Path | What it is |
@@ -24,7 +79,7 @@ The app has five tabs, taken from the `HayesX Mobile App.xlsx` sitemap:
 | [`docs/05-sprint-plan.md`](docs/05-sprint-plan.md) | Epics, user stories, estimates, six sprints to v1.0 |
 | [`docs/06-open-questions.md`](docs/06-open-questions.md) | Decisions needed before build, with owners |
 | [`data/preflight-checklist.json`](data/preflight-checklist.json) | The full checklist as structured data, ready to import |
-| [`prototype/index.html`](prototype/index.html) | Self-contained clickable prototype — open in a browser |
+| [`prototype/index.html`](prototype/index.html) | The original clickable design draft — kept as the design reference |
 
 **Live prototype:** https://claude.ai/code/artifact/9436b345-1efb-448f-9b88-47fb3edf08fc
 

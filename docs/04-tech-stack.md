@@ -53,7 +53,25 @@ is being reviewed. For production, deploy on Vercel and keep the database in
 Supabase — you want migrations, backups, and RLS on records that are legal
 documents.
 
-## 4.2 Project shape
+## 4.2 What was actually built
+
+v1.0 in this repo is the Next.js PWA above, with **one deliberate simplification**:
+persistence is local-only (Dexie/IndexedDB) rather than Supabase. That makes the
+app deployable to Vercel with zero configuration and no credentials, and it is
+the right shape for the field anyway — the app is local-first, so Supabase is a
+sync target, not the source of truth.
+
+To add sync, the work is contained:
+
+1. Stand up a Supabase project and port `lib/db.ts`'s schema to SQL, adding the
+   §3.3 triggers.
+2. Add an `outbox` table to the Dexie schema and push through it. Every mutation
+   already funnels through `lib/repo.ts`, so there is one layer to change.
+3. Add auth around `app/(app)/layout.tsx` and swap the onboarding gate for it.
+
+Nothing in the screens touches storage directly, so none of them change.
+
+## 4.3 Project shape
 
 ```
 hayesx-app/
@@ -81,7 +99,7 @@ hayesx-app/
 └── public/                icons, manifest, service worker
 ```
 
-## 4.3 Manual content — do not ship PDFs
+## 4.4 Manual content — do not ship PDFs
 
 The Flight Manual and Maintenance Manual should be converted **once** into
 structured JSON/MDX with stable section IDs, not embedded as PDFs. Reasons:
@@ -92,10 +110,13 @@ structured JSON/MDX with stable section IDs, not embedded as PDFs. Reasons:
 - The tables (limits, specifications, maintenance intervals) need to be real
   tables.
 
-This is a one-off content-engineering task, sized in Sprint 4. The bilingual
+This is a one-off content-engineering task, sized as story E-0. The app
+already carries Chapter 2's limits and Chapter 3's sixteen procedures in full
+(`lib/limits.ts`, `lib/emergency.ts`); what remains is Chapters 1, 4 and 5 and
+the Maintenance Manual body. The bilingual
 Maintenance Manual doubles it — see Q8.
 
-## 4.4 Environment and delivery
+## 4.5 Environment and delivery
 
 - **Environments:** `preview` (per PR, Vercel), `staging` (pilot beta),
   `production`. Separate Supabase projects for staging and production.
