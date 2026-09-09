@@ -7,7 +7,7 @@ the honest trade-offs.
 
 | Layer | Choice | Why |
 |---|---|---|
-| App | **Next.js 15, App Router, TypeScript** | Vercel-native, one codebase for iOS + Android + desktop |
+| App | **Next.js 16, App Router, TypeScript** | Vercel-native, one codebase for iOS + Android + desktop |
 | Delivery | **Installable PWA** | Home-screen install, no app-store review |
 | UI | **Tailwind CSS + shadcn/ui** | Fast, and easy to force the large-target, high-contrast rules from §1.4 |
 | Offline | **Service worker (Serwist) + IndexedDB (Dexie)** | The non-negotiable requirement |

@@ -15,7 +15,7 @@ The app has five tabs, taken from the `HayesX Mobile App.xlsx` sitemap:
 
 ## The app
 
-A **Next.js 15 PWA**, local-first: every screen reads and writes IndexedDB in
+A **Next.js 16 PWA**, local-first: every screen reads and writes IndexedDB in
 the browser, so the whole app works with the radio off — which is the normal
 case at a Part 103 field, not the edge case.
 
@@ -25,6 +25,8 @@ npm run dev        # http://localhost:3000
 npm run build && npm start
 npm run test:e2e   # 22-step end-to-end run (needs a build running)
 ```
+
+**Live:** https://hayesx.vercel.app
 
 Deploying to Vercel needs no configuration: import the repo and it builds. There
 is no database to provision and no environment variable to set — see
