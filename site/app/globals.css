@@ -1,0 +1,133 @@
+@import "tailwindcss";
+
+/*
+ * HayesX — a single committed visual world: high-desert night.
+ *
+ * Warm graphite rather than the usual blue-black, because the subject is the
+ * Mojave at altitude, not a server rack. The one bright note is dawn sky, the
+ * colour of the thing being sold. Calls to action are solid bone on dark.
+ */
+@theme {
+  --color-void: #0d0c0b;
+  --color-deep: #110f0e;
+  --color-surface: #171614;
+  --color-raised: #201e1b;
+  --color-line: #2b2826;
+  --color-line-2: #3a3633;
+
+  --color-bone: #f0ece6;
+  --color-dust: #9c9388;
+  --color-faint: #6d6660;
+
+  --color-sky: #a8cce0;
+  --color-sky-deep: #6f9fba;
+  --color-ember: #c98a4b;
+
+  --font-display: Saira, ui-sans-serif, system-ui, sans-serif;
+  --font-sans: Manrope, ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "Azeret Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html {
+  color-scheme: dark;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+body {
+  background: var(--color-void);
+  color: var(--color-bone);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--color-sky);
+  color: var(--color-void);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-sky);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* Small caps eyebrow, used to label every section. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-sky);
+}
+
+/* Hairline rule that fades out, borrowed from drawing sheets. */
+@utility rule-fade {
+  background: linear-gradient(
+    90deg,
+    var(--color-line-2),
+    var(--color-line) 45%,
+    transparent
+  );
+}
+
+/* Reveal-on-scroll: starts visible, animates only as an enhancement. */
+.reveal {
+  opacity: 1;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .reveal.js {
+    opacity: 0;
+    transform: translateY(14px);
+    transition:
+      opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .reveal.js.in {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Rotor idle, used on the plan view. */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.rotor {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rotor {
+    animation: spin 5.5s linear infinite;
+  }
+  .rotor-b {
+    animation-direction: reverse;
+    animation-duration: 6.5s;
+  }
+}
+
+/* Faint grid, the paper the drawings sit on. */
+.grid-paper {
+  background-image:
+    linear-gradient(var(--color-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--color-line) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, #000 30%, transparent 100%);
+}

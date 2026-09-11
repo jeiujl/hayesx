@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="HayesX">
+  <rect width="64" height="64" rx="14" fill="#0D0C0B"/>
+  <g stroke="#A8CCE0" stroke-width="4.4" stroke-linecap="round" fill="none">
+    <path d="M14 20v24M14 32h13M27 20v24"/>
+    <path d="M38 20l12 24M50 20L38 44"/>
+  </g>
+</svg>
