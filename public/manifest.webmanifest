@@ -1,0 +1,1 @@
+{"name":"HayesX Flight Companion","short_name":"HayesX","description":"Your aircraft checklist, signed logbook and manuals.","start_url":"/","display":"standalone","background_color":"#f5f7fb","theme_color":"#2459d3","icons":[{"src":"/app-icon-192.png","sizes":"192x192","type":"image/png"},{"src":"/app-icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}
