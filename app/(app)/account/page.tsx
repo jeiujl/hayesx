@@ -3,18 +3,8 @@
 import { useLiveQuery } from "dexie-react-hooks";
 import { useState } from "react";
 import SignaturePad from "@/components/SignaturePad";
-import {
-  Button,
-  Card,
-  Cite,
-  Field,
-  Label,
-  List,
-  Pill,
-  Row,
-  ScreenTitle,
-  TextInput,
-} from "@/components/ui";
+import ThemeControl from "@/components/ThemeControl";
+import { Button, Group, Row, ScreenTitle, Status, TextInput } from "@/components/ui";
 import { CHECKLIST } from "@/lib/checklist";
 import { APP_VERSION, db } from "@/lib/db";
 import { fmtDate } from "@/lib/format";
@@ -73,132 +63,128 @@ export default function Account() {
     await saveProfile({ ...profile!, signature: sig });
   }
 
+  const initials =
+    profile.fullName
+      .split(/\s+/)
+      .map((p) => p[0])
+      .filter(Boolean)
+      .slice(0, 2)
+      .join("")
+      .toUpperCase() || "—";
+
   return (
-    <div className="flex flex-col gap-3.5 rise">
+    <div className="flex flex-col gap-6 rise">
       <ScreenTitle title="Account" />
 
-      <Card>
-        <div className="flex items-center gap-3">
-          <div className="grid h-[46px] w-[46px] flex-none place-items-center rounded-full bg-sky-bg font-display text-[17px] font-bold text-sky">
-            {profile.fullName
-              .split(/\s+/)
-              .map((p) => p[0])
-              .filter(Boolean)
-              .slice(0, 2)
-              .join("")
-              .toUpperCase() || "—"}
-          </div>
-          <div className="min-w-0 flex-1">
-            {editing ? (
-              <TextInput
-                autoFocus
-                value={name || profile.fullName}
-                onChange={(e) => setName(e.target.value)}
-              />
-            ) : (
-              <div className="text-base font-semibold">{profile.fullName}</div>
-            )}
-            <Cite>
-              {[profile.email, profile.phone].filter(Boolean).join(" · ") || "No contact details"}
-            </Cite>
-          </div>
-          <button
-            type="button"
-            onClick={async () => {
-              if (editing && name.trim()) await saveProfile({ ...profile, fullName: name.trim() });
-              setEditing(!editing);
-            }}
-            className="font-mono text-[10px] uppercase tracking-wider text-sky"
-          >
-            {editing ? "Save" : "Edit"}
-          </button>
+      {/* Profile */}
+      <div className="flex items-center gap-4 rounded-2xl bg-card p-4">
+        <div className="grid h-14 w-14 flex-none place-items-center rounded-full bg-accent text-[20px] font-semibold text-white">
+          {initials}
         </div>
-      </Card>
-
-      <Label>Aircraft</Label>
-      <Card>
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="text-[15px] font-semibold">{aircraft.model}</div>
-            <Cite>
-              S/N {aircraft.serialNumber}
-              {aircraft.tailId ? ` · ${aircraft.tailId}` : ""}
-              {aircraft.inServiceDate
-                ? ` · in service ${fmtDate(new Date(aircraft.inServiceDate).getTime())}`
-                : ""}
-            </Cite>
-          </div>
-          {aircraft.status === "grounded" ? (
-            <Pill tone="warn">Grounded</Pill>
+        <div className="min-w-0 flex-1">
+          {editing ? (
+            <TextInput autoFocus value={name || profile.fullName} onChange={(e) => setName(e.target.value)} />
           ) : (
-            <Pill tone="go">Airworthy</Pill>
+            <div className="text-[19px] font-semibold tracking-[-0.01em]">{profile.fullName}</div>
           )}
+          <div className="mt-0.5 truncate text-[13.5px] text-mut">
+            {[profile.email, profile.phone].filter(Boolean).join(" · ") || "No contact details"}
+          </div>
         </div>
-        <div className="mt-2.5 border-t border-line2 pt-2">
-          <Cite>
-            The serial number is entered once at setup and copied onto every record. Editing it
-            here would not change records already signed.
-          </Cite>
-        </div>
-      </Card>
+        <button
+          type="button"
+          onClick={async () => {
+            if (editing && name.trim()) await saveProfile({ ...profile, fullName: name.trim() });
+            setEditing(!editing);
+          }}
+          className="min-h-11 px-1 text-[16px] font-medium text-accent"
+        >
+          {editing ? "Done" : "Edit"}
+        </button>
+      </div>
 
-      <Label>Signature</Label>
-      <SignaturePad value={profile.signature} onChange={saveSignature} />
-      <Cite>
-        Changing your signature never alters a record you have already signed — each one keeps its
-        own copy.
-      </Cite>
-
-      <List>
-        <Row title="Units" right={<Cite>Metric</Cite>} />
-        <Row title="Theme" right={<Cite>Daylight</Cite>} />
-        <Row title="Language" right={<Cite>English</Cite>} />
+      <Group
+        label="Aircraft"
+        footer="The serial number is entered once at setup and copied onto every record. Editing it would not change records already signed."
+      >
         <Row
-          title="Notifications"
-          sub={<Cite>Safety bulletins always on</Cite>}
-          right={<Cite>On</Cite>}
-        />
-      </List>
-
-      <List>
-        <Row
-          title="Data & sync"
+          title={aircraft.model}
           sub={
-            <Cite>
-              {counts?.flights ?? 0} flights · {counts?.preflights ?? 0} preflights ·{" "}
-              {counts?.defects ?? 0} defects
-            </Cite>
+            <span className="font-mono">
+              {aircraft.serialNumber}
+              {aircraft.tailId ? ` · ${aircraft.tailId}` : ""}
+            </span>
           }
-          right={<Pill tone="caut">On device</Pill>}
+          right={
+            aircraft.status === "grounded" ? (
+              <Status tone="warn">Grounded</Status>
+            ) : (
+              <Status tone="go">Airworthy</Status>
+            )
+          }
+          chevron={false}
         />
-        <Row title="Export all data" onClick={exportAll} sub={<Cite>JSON</Cite>} />
-      </List>
+        {aircraft.inServiceDate ? (
+          <Row title="In service" value={fmtDate(new Date(aircraft.inServiceDate).getTime())} chevron={false} />
+        ) : null}
+        <Row title="Category" value="Part 103" chevron={false} />
+      </Group>
 
-      <Card>
-        <Label>FAA Part 103</Label>
-        <p className="mt-1.5 text-[13px] leading-relaxed text-mut">
-          The HayesX-250 is designed, built and operated in accordance with US FAA Part 103 and
-          CCAR-91-R4 requirements for ultralight vehicles. No vehicle certification, airworthiness
-          certificate, or certification as a conventional aircraft is required.
-        </p>
-        <div className="mt-2 border-t border-line2 pt-2">
-          <Cite>
-            Flight Manual 1.4 · app {APP_VERSION} · checklist v{CHECKLIST.schemaVersion} · manual
-            rev {CHECKLIST.revision}
-          </Cite>
+      <section>
+        <h2 className="group-label mb-1.5 px-4">Display</h2>
+        <div className="rounded-xl bg-card p-3">
+          <ThemeControl />
         </div>
-      </Card>
+        <p className="mt-1.5 px-4 text-[12.5px] leading-snug text-faint">
+          Day for bright outdoor light. Night for low light. Auto follows your device.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="group-label mb-1.5 px-4">Signature</h2>
+        <SignaturePad value={profile.signature} onChange={saveSignature} />
+        <p className="mt-1.5 px-4 text-[12.5px] leading-snug text-faint">
+          Changing your signature never alters a record already signed — each keeps its own copy.
+        </p>
+      </section>
+
+      <Group label="Preferences">
+        <Row title="Units" value="Metric" chevron={false} />
+        <Row title="Language" value="English" chevron={false} />
+        <Row title="Notifications" sub="Safety bulletins are always on" value="On" chevron={false} />
+      </Group>
+
+      <Group label="Data">
+        <Row
+          title="Stored on this device"
+          sub={`${counts?.flights ?? 0} flights · ${counts?.preflights ?? 0} preflights · ${counts?.defects ?? 0} defects`}
+          chevron={false}
+        />
+        <Row title="Export all data" sub="JSON" onClick={exportAll} />
+      </Group>
+
+      <Group
+        label="FAA Part 103"
+        footer={`Flight Manual 1.4 · app ${APP_VERSION} · checklist v${CHECKLIST.schemaVersion} · manual rev ${CHECKLIST.revision}`}
+      >
+        <p className="px-4 py-3.5 text-[14px] leading-relaxed text-mut">
+          The HayesX-250 is designed, built and operated in accordance with US FAA Part 103 and
+          CCAR-91-R4 requirements for ultralight vehicles. No vehicle certification,
+          airworthiness certificate, or certification as a conventional aircraft is required.
+        </p>
+      </Group>
 
       <Button
         tone="quiet"
         small
+        className="!text-warn"
         onClick={async () => {
           if (!confirm("Delete every record on this device? This cannot be undone.")) return;
           await Promise.all(db.tables.map((t) => t.clear()));
           location.href = "/onboarding";
         }}
       >
-        Reset this device
+        Reset This Device
       </Button>
     </div>
   );

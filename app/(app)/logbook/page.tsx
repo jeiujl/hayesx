@@ -1,10 +1,9 @@
 "use client";
 
 import { useLiveQuery } from "dexie-react-hooks";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-import { Alert, Button, Cite, Empty, Label, ScreenTitle, TextInput } from "@/components/ui";
+import { Alert, Empty, Group, Row, ScreenTitle, Segmented, TextInput } from "@/components/ui";
 import { db } from "@/lib/db";
 import { fmtMonth, hhmm, toDateInput } from "@/lib/format";
 import { RuleError, activeAircraft, createFlightDraft, totalsOf } from "@/lib/repo";
@@ -12,13 +11,21 @@ import type { Flight } from "@/lib/types";
 
 type RangeKey = "month" | "30" | "year" | "all" | "custom";
 
-const RANGES: { key: RangeKey; label: string }[] = [
-  { key: "month", label: "This month" },
-  { key: "30", label: "Last 30 days" },
-  { key: "year", label: "This year" },
-  { key: "all", label: "All time" },
-  { key: "custom", label: "Custom…" },
+const RANGES: { value: RangeKey; label: string }[] = [
+  { value: "month", label: "Month" },
+  { value: "30", label: "30 days" },
+  { value: "year", label: "Year" },
+  { value: "all", label: "All" },
+  { value: "custom", label: "Custom" },
 ];
+
+const RANGE_NAME: Record<RangeKey, string> = {
+  month: "This month",
+  "30": "Last 30 days",
+  year: "This year",
+  all: "All time",
+  custom: "Custom range",
+};
 
 function rangeBounds(key: RangeKey, from: string, to: string): [number, number] {
   const now = new Date();
@@ -90,80 +97,89 @@ export default function Logbook() {
   }
 
   return (
-    <div className="flex flex-col gap-3.5 rise">
-      <ScreenTitle title="Logbook" sub={aircraft ? `S/N ${aircraft.serialNumber}` : undefined} />
-
-      {/* Totals — the paper logbook's page-totals block */}
-      <div className="overflow-hidden rounded-xl border border-line bg-card">
-        <div className="grid grid-cols-2 px-2 pt-4 pb-3.5 text-center">
-          <div>
-            <div className="font-mono text-[32px] font-semibold leading-none tracking-tighter tabular-nums">
-              {totals.flights}
-            </div>
-            <div className="mt-1 text-[9.5px] font-bold uppercase tracking-[0.14em] text-faint">
-              Flights
-            </div>
-          </div>
-          <div className="border-l border-line2">
-            <div className="font-mono text-[32px] font-semibold leading-none tracking-tighter tabular-nums">
-              {totals.minutes.toLocaleString()}
-            </div>
-            <div className="mt-1 text-[9.5px] font-bold uppercase tracking-[0.14em] text-faint">
-              Minutes · {hhmm(totals.minutes)}
-            </div>
-          </div>
-        </div>
-        <div className="flex justify-between border-t border-dashed border-line px-3.5 py-2 font-mono text-[11.5px] text-mut">
-          <span>
-            Longest {totals.longest} · avg {totals.average}
-          </span>
-          <span>
-            To date {lifetime.flights} / {lifetime.minutes.toLocaleString()}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-1.5">
-        {RANGES.map((r) => (
+    <div className="flex flex-col gap-5 rise">
+      <ScreenTitle
+        title="Logbook"
+        sub={aircraft ? `${aircraft.model} · ${aircraft.serialNumber}` : undefined}
+        action={
           <button
-            key={r.key}
             type="button"
-            onClick={() => setRange(r.key)}
-            className={`rounded-full px-3 py-1.5 font-mono text-[10.5px] font-bold uppercase tracking-widest ${
-              range === r.key ? "bg-sky text-white" : "bg-line2 text-mut"
-            }`}
+            onClick={newEntry}
+            aria-label="New entry"
+            className="grid h-9 w-9 place-items-center rounded-full bg-accent text-white active:opacity-80"
           >
-            {r.label}
+            <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true">
+              <path d="M8 2.5v11M2.5 8h11" />
+            </svg>
           </button>
-        ))}
-      </div>
+        }
+      />
 
-      {range === "custom" ? (
-        <div className="grid grid-cols-2 gap-2">
-          <label className="block rounded-xl border border-line bg-card px-3 py-2">
-            <Label>From</Label>
-            <TextInput type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
-          </label>
-          <label className="block rounded-xl border border-line bg-card px-3 py-2">
-            <Label>To</Label>
-            <TextInput type="date" value={to} onChange={(e) => setTo(e.target.value)} />
-          </label>
-        </div>
-      ) : null}
-
-      <label className="block rounded-xl border border-line bg-card px-3 py-2">
-        <Label>Search</Label>
-        <TextInput
+      {/* Search, native style */}
+      <label className="flex items-center gap-2 rounded-[10px] bg-line2 px-3">
+        <svg viewBox="0 0 16 16" className="h-4 w-4 flex-none text-faint" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+          <circle cx="7" cy="7" r="5" />
+          <path d="M11 11l3.5 3.5" strokeLinecap="round" />
+        </svg>
+        <span className="sr-only">Search</span>
+        <input
           type="search"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Route, weather or notes…"
+          placeholder="Search route, weather, notes"
+          className="min-h-9 w-full bg-transparent text-[16px] outline-none placeholder:text-faint"
         />
       </label>
 
+      <Segmented label="Date range" options={RANGES} value={range} onChange={setRange} />
+
+      {range === "custom" ? (
+        <Group>
+          <div className="grid grid-cols-2 divide-x divide-line2">
+            <label className="block px-4 py-2.5">
+              <span className="text-[12.5px] font-medium text-mut">From</span>
+              <TextInput type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
+            </label>
+            <label className="block px-4 py-2.5">
+              <span className="text-[12.5px] font-medium text-mut">To</span>
+              <TextInput type="date" value={to} onChange={(e) => setTo(e.target.value)} />
+            </label>
+          </div>
+        </Group>
+      ) : null}
+
+      {/* Totals — the paper logbook's page-totals block */}
+      <Group label={RANGE_NAME[range]} footer={`Totals to date: ${lifetime.flights} flights · ${lifetime.minutes.toLocaleString()} min`}>
+        <div className="grid grid-cols-2 divide-x divide-line2">
+          <div className="px-4 py-3.5">
+            <div className="text-[12.5px] text-mut">Flights</div>
+            <div data-testid="total-flights" className="mt-0.5 text-[30px] leading-none font-semibold tracking-tight tabular-nums">
+              {totals.flights}
+            </div>
+          </div>
+          <div className="px-4 py-3.5">
+            <div className="text-[12.5px] text-mut">Flight time</div>
+            <div className="mt-0.5 text-[30px] leading-none font-semibold tracking-tight tabular-nums">
+              {hhmm(totals.minutes)}
+            </div>
+            <div className="mt-1 text-[12px] text-faint tabular-nums">{totals.minutes.toLocaleString()} min</div>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 divide-x divide-line2 border-t border-line2">
+          <div className="flex items-baseline justify-between px-4 py-2.5 text-[14px]">
+            <span className="text-mut">Longest</span>
+            <span className="tabular-nums">{totals.longest} min</span>
+          </div>
+          <div className="flex items-baseline justify-between px-4 py-2.5 text-[14px]">
+            <span className="text-mut">Average</span>
+            <span className="tabular-nums">{totals.average} min</span>
+          </div>
+        </div>
+      </Group>
+
       {error ? (
         <Alert tone="danger" title="Cannot add an entry">
-          <div className="text-[14px]">{error}</div>
+          <div className="text-[15px]">{error}</div>
         </Alert>
       ) : null}
 
@@ -175,52 +191,43 @@ export default function Logbook() {
         </Empty>
       ) : (
         grouped.map(([month, entries]) => (
-          <div key={month} className="flex flex-col gap-2">
-            <div className="px-1 pt-1 text-[10.5px] font-bold uppercase tracking-[0.13em] text-faint">
-              {month}
-            </div>
+          <Group key={month} label={month}>
             {entries.map((f) => {
               const d = new Date(f.flightDateTime);
               return (
-                <Link
+                <Row
                   key={f.id}
                   href={`/logbook/${f.id}`}
-                  className="flex items-center gap-3 rounded-xl border border-line bg-card px-3.5 py-2.5"
-                >
-                  <div className="w-11 flex-none text-center font-mono text-[11px] leading-tight text-faint">
-                    <b className="block text-[17px] font-semibold text-ink">
-                      {String(d.getDate()).padStart(2, "0")}
-                    </b>
-                    {d.toLocaleDateString(undefined, { weekday: "short" })}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="truncate text-[15px] font-medium">
-                      {f.routeFrom || "—"} → {f.routeTo || "—"}
+                  leading={
+                    <div className="w-10 text-center leading-tight">
+                      <div className="text-[19px] font-semibold tabular-nums">
+                        {String(d.getDate()).padStart(2, "0")}
+                      </div>
+                      <div className="text-[11px] font-medium text-faint uppercase">
+                        {d.toLocaleDateString(undefined, { weekday: "short" })}
+                      </div>
                     </div>
-                    <Cite>
-                      {f.weather || "No weather noted"} · {f.pilotName}
-                    </Cite>
-                  </div>
-                  <div className="flex-none text-right">
-                    <div className="font-mono text-[13px] font-semibold tabular-nums">
-                      {f.flightMinutes}′
+                  }
+                  title={
+                    <span className="block truncate">
+                      {f.routeFrom || "—"} <span className="text-faint">→</span> {f.routeTo || "—"}
+                    </span>
+                  }
+                  sub={`${f.weather || "No weather noted"} · ${f.pilotName}`}
+                  right={
+                    <div className="flex-none text-right">
+                      <div className="text-[16px] font-medium tabular-nums">{f.flightMinutes} min</div>
+                      <div className={`text-[12px] font-semibold ${f.signedAt ? "text-go" : "text-caut"}`}>
+                        {f.signedAt ? "Signed" : "Draft"}
+                      </div>
                     </div>
-                    <div
-                      className={`font-mono text-[10.5px] ${f.signedAt ? "text-go" : "text-caut"}`}
-                    >
-                      {f.signedAt ? "✓" : "draft"}
-                    </div>
-                  </div>
-                </Link>
+                  }
+                />
               );
             })}
-          </div>
+          </Group>
         ))
       )}
-
-      <Button small onClick={newEntry}>
-        NEW ENTRY
-      </Button>
     </div>
   );
 }

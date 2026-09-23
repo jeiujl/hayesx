@@ -65,7 +65,7 @@ export default function NoGo() {
               className="aspect-square w-full rounded-lg border border-line object-cover"
             />
           ))}
-          <label className="grid aspect-square w-full cursor-pointer place-items-center rounded-lg border-[1.5px] border-dashed border-line bg-card text-2xl text-sky">
+          <label className="grid aspect-square w-full cursor-pointer place-items-center rounded-lg border-[1.5px] border-dashed border-line bg-card text-2xl text-accent">
             +
             <input
               type="file"
@@ -99,7 +99,7 @@ export default function NoGo() {
       </Alert>
 
       <Button tone="warn" onClick={confirm}>
-        SAVE DEFECT
+        Save Defect
       </Button>
       <Button tone="quiet" small onClick={() => router.push("/messages")}>
         Send to HayesX support

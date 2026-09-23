@@ -57,7 +57,7 @@ export default function Onboarding() {
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col gap-5 px-5 pt-8 pb-10">
       <div>
-        <div className="font-mono text-[11px] font-medium uppercase tracking-[0.13em] text-sky">
+        <div className="font-mono text-[11px] font-medium uppercase tracking-[0.13em] text-accent">
           Set up · step {step + 1} of 3
         </div>
         <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight">
@@ -76,7 +76,7 @@ export default function Onboarding() {
         {STEPS.map((s, i) => (
           <div
             key={s}
-            className={`h-1 flex-1 rounded-full ${i <= step ? "bg-sky" : "bg-line"}`}
+            className={`h-1 flex-1 rounded-full ${i <= step ? "bg-accent" : "bg-line"}`}
           />
         ))}
       </div>
@@ -176,7 +176,7 @@ export default function Onboarding() {
             (step === 2 && !signature)
           }
         >
-          {step === 2 ? "FINISH SETUP" : "CONTINUE"}
+          {step === 2 ? "Finish Setup" : "Continue"}
         </Button>
         {step > 0 ? (
           <Button tone="quiet" small onClick={() => setStep(step - 1)}>

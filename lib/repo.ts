@@ -105,55 +105,83 @@ function assertMutable(p: Preflight) {
   if (p.signedAt !== null) throw new RuleError("This preflight is signed and cannot change.");
 }
 
-/** Rule 4: recording a no-go raises a defect and grounds the aircraft. */
+/**
+ * Rule 4: recording a no-go raises a defect and grounds the aircraft.
+ *
+ * Runs as one read-write transaction. IndexedDB serialises overlapping
+ * read-write transactions, so a double tap — easy in gloves — cannot record
+ * an item twice or raise two defects for one fault: the second tap waits for
+ * the first and then sees its result.
+ */
 export async function answerItem(
   preflightId: string,
   itemId: string,
   result: ItemResult,
   numericValue: number | null = null
-) {
-  const p = await db.preflights.get(preflightId);
-  if (!p) throw new RuleError("Preflight not found.");
-  assertMutable(p);
-
+): Promise<string | null> {
   const item = allItems().find((i) => i.id === itemId);
   if (!item) throw new RuleError(`Unknown checklist item ${itemId}.`);
 
-  const prior = await db.itemResults.where("preflightId").equals(preflightId).toArray();
-  const existing = prior.find((r) => r.itemId === itemId);
+  return db.transaction(
+    "rw",
+    [db.preflights, db.itemResults, db.defects, db.aircraft, db.session],
+    async () => {
+      const p = await db.preflights.get(preflightId);
+      if (!p) throw new RuleError("Preflight not found.");
+      assertMutable(p);
 
-  const rec: ItemResultRecord = {
-    id: existing?.id ?? uid(),
-    preflightId,
-    itemId,
-    itemText: item.text,
-    fmSection: item.fmSection,
-    result,
-    numericValue,
-    answeredAt: Date.now(),
-    sequenceIndex: existing?.sequenceIndex ?? prior.length,
-  };
-  await db.itemResults.put(rec);
+      const prior = await db.itemResults.where("preflightId").equals(preflightId).toArray();
+      const existing = prior.find((r) => r.itemId === itemId);
 
-  if (result === "no_go") {
-    const defectId = await raiseDefect({
-      aircraftId: p.aircraftId,
-      source: "preflight",
-      itemId: item.id,
-      itemText:
-        item.type === "numeric_gate" && numericValue !== null
-          ? `${item.text} — ${numericValue}${item.unit ?? ""} (minimum ${item.min}${item.unit ?? ""})`
-          : item.text,
-      fmSection: item.fmSection,
-      note: "",
-      raisedBy: p.pilotName,
-    });
-    await db.preflights.update(preflightId, { status: "no_go" });
-    // The run is over: a no-go cannot be resumed, so drop the session pointer.
-    await patchSession({ activePreflightId: null });
-    return defectId;
-  }
-  return null;
+      // A no-go ends the run. Repeating the same no-go is harmless and returns
+      // the defect already raised; anything else afterwards is refused, so a
+      // record can never show an item passed alongside the defect it raised.
+      if (p.status === "no_go") {
+        if (result === "no_go" && existing?.result === "no_go") {
+          const open = await db.defects
+            .where("aircraftId")
+            .equals(p.aircraftId)
+            .filter((d) => d.status === "open" && d.itemId === itemId)
+            .first();
+          return open?.id ?? null;
+        }
+        throw new RuleError(
+          "This preflight ended with a no-go. Start a new one once the defect is cleared."
+        );
+      }
+
+      await db.itemResults.put({
+        id: existing?.id ?? uid(),
+        preflightId,
+        itemId,
+        itemText: item.text,
+        fmSection: item.fmSection,
+        result,
+        numericValue,
+        answeredAt: Date.now(),
+        sequenceIndex: existing?.sequenceIndex ?? prior.length,
+      });
+
+      if (result !== "no_go") return null;
+
+      const defectId = await raiseDefect({
+        aircraftId: p.aircraftId,
+        source: "preflight",
+        itemId: item.id,
+        itemText:
+          item.type === "numeric_gate" && numericValue !== null
+            ? `${item.text} — ${numericValue}${item.unit ?? ""} (minimum ${item.min}${item.unit ?? ""})`
+            : item.text,
+        fmSection: item.fmSection,
+        note: "",
+        raisedBy: p.pilotName,
+      });
+      await db.preflights.update(preflightId, { status: "no_go" });
+      // The run is over: a no-go cannot be resumed, so drop the session pointer.
+      await patchSession({ activePreflightId: null });
+      return defectId;
+    }
+  );
 }
 
 /** The run a pilot can actually resume: in progress, on this airframe. */
@@ -169,7 +197,10 @@ export async function resultsFor(preflightId: string) {
   return db.itemResults.where("preflightId").equals(preflightId).toArray();
 }
 
-/** Rule 3: sign only when every required item has passed. */
+/**
+ * Rule 3: sign only when every required item has passed.
+ * Atomic, and a repeat tap on a record that is already signed changes nothing.
+ */
 export async function signPreflight(opts: {
   preflightId: string;
   signature: string;
@@ -177,37 +208,38 @@ export async function signPreflight(opts: {
   longitude: number | null;
   accuracy: number | null;
 }) {
-  const p = await db.preflights.get(opts.preflightId);
-  if (!p) throw new RuleError("Preflight not found.");
-  assertMutable(p);
+  await db.transaction("rw", [db.preflights, db.itemResults, db.session], async () => {
+    const p = await db.preflights.get(opts.preflightId);
+    if (!p) throw new RuleError("Preflight not found.");
+    if (p.signedAt !== null) return; // already signed — immutable, nothing to do
 
-  const results = await resultsFor(opts.preflightId);
-  const byId = new Map(results.map((r) => [r.itemId, r]));
-  const missing = allItems().filter((i) => !byId.has(i.id));
-  if (missing.length > 0) {
-    throw new RuleError(`${missing.length} item(s) unanswered — cannot sign.`);
-  }
-  const failed = results.filter((r) => r.result === "no_go");
-  if (failed.length > 0) {
-    throw new RuleError("A checklist item was marked NO-GO — cannot sign.");
-  }
+    const results = await resultsFor(opts.preflightId);
+    const byId = new Map(results.map((r) => [r.itemId, r]));
+    const missing = allItems().filter((i) => !byId.has(i.id));
+    if (missing.length > 0) {
+      throw new RuleError(`${missing.length} item(s) unanswered — cannot sign.`);
+    }
+    if (results.some((r) => r.result === "no_go")) {
+      throw new RuleError("A checklist item was marked NO-GO — cannot sign.");
+    }
 
-  const gate = allItems().find((i) => i.type === "numeric_gate");
-  const battery = gate ? (byId.get(gate.id)?.numericValue ?? null) : null;
+    const gate = allItems().find((i) => i.type === "numeric_gate");
+    const battery = gate ? (byId.get(gate.id)?.numericValue ?? null) : null;
 
-  const now = Date.now();
-  await db.preflights.update(opts.preflightId, {
-    status: "signed",
-    completedAt: now,
-    signedAt: now,
-    expiresAt: now + CHECKLIST.validityMinutes * 60_000,
-    signature: opts.signature, // rule 6: copied by value
-    latitude: opts.latitude,
-    longitude: opts.longitude,
-    locationAccuracy: opts.accuracy,
-    batteryPercent: battery,
+    const now = Date.now();
+    await db.preflights.update(opts.preflightId, {
+      status: "signed",
+      completedAt: now,
+      signedAt: now,
+      expiresAt: now + CHECKLIST.validityMinutes * 60_000,
+      signature: opts.signature, // rule 6: copied by value
+      latitude: opts.latitude,
+      longitude: opts.longitude,
+      locationAccuracy: opts.accuracy,
+      batteryPercent: battery,
+    });
+    await patchSession({ activePreflightId: null });
   });
-  await patchSession({ activePreflightId: null });
 }
 
 export async function abandonPreflight(id: string) {
@@ -267,23 +299,29 @@ export async function openDefect(aircraftId: string) {
     .first();
 }
 
-/** Rule 5: the only route from grounded back to airworthy. */
+/**
+ * Rule 5: the only route from grounded back to airworthy.
+ * Atomic, so a double tap files one release, not two.
+ */
 export async function returnToService(
   r: Omit<ReturnToService, "id" | "signedAt">
 ): Promise<string> {
   if (!r.signature) throw new RuleError("A Return to Service must be signed.");
-  const id = uid();
-  await db.returnToService.put({ ...r, id, signedAt: Date.now() });
-  await db.defects.update(r.defectId, { status: "closed", closedByRtsId: id });
+  return db.transaction("rw", [db.returnToService, db.defects, db.aircraft], async () => {
+    const defect = await db.defects.get(r.defectId);
+    if (!defect) throw new RuleError("Defect not found.");
+    if (defect.status === "closed" && defect.closedByRtsId) return defect.closedByRtsId;
 
-  const stillOpen = await openDefect(r.aircraftId);
-  if (!stillOpen) {
-    await db.aircraft.update(r.aircraftId, {
-      status: "airworthy",
-      groundedDefectId: null,
-    });
-  }
-  return id;
+    const id = uid();
+    await db.returnToService.put({ ...r, id, signedAt: Date.now() });
+    await db.defects.update(r.defectId, { status: "closed", closedByRtsId: id });
+
+    const stillOpen = await openDefect(r.aircraftId);
+    if (!stillOpen) {
+      await db.aircraft.update(r.aircraftId, { status: "airworthy", groundedDefectId: null });
+    }
+    return id;
+  });
 }
 
 /* ── Flights ─────────────────────────────────────────────────────────── */
@@ -344,33 +382,32 @@ export async function updateFlightDraft(id: string, patch: Partial<Flight>) {
   await db.flights.update(id, patch);
 }
 
+/** Atomic, so a double tap cannot raise a second hard-landing defect. */
 export async function signFlight(id: string, signature: string) {
-  const f = await db.flights.get(id);
-  if (!f) throw new RuleError("Flight not found.");
-  if (f.signedAt !== null) throw new RuleError("Already signed.");
-  if (!f.routeFrom.trim() || !f.routeTo.trim()) {
-    throw new RuleError("Enter the flight route before signing.");
-  }
-  if (!Number.isFinite(f.flightMinutes) || f.flightMinutes <= 0) {
-    throw new RuleError("Flight time must be at least one minute.");
-  }
-  await db.flights.update(id, {
-    certified: true,
-    signature,
-    signedAt: Date.now(),
-  });
+  await db.transaction("rw", [db.flights, db.defects, db.aircraft], async () => {
+    const f = await db.flights.get(id);
+    if (!f) throw new RuleError("Flight not found.");
+    if (f.signedAt !== null) return; // already signed — immutable, nothing to do
+    if (!f.routeFrom.trim() || !f.routeTo.trim()) {
+      throw new RuleError("Enter the flight route before signing.");
+    }
+    if (!Number.isFinite(f.flightMinutes) || f.flightMinutes <= 0) {
+      throw new RuleError("Flight time must be at least one minute.");
+    }
+    await db.flights.update(id, { certified: true, signature, signedAt: Date.now() });
 
-  if (f.hardLanding) {
-    await raiseDefect({
-      aircraftId: f.aircraftId,
-      source: "hard_landing",
-      itemId: null,
-      itemText: "Hard landing reported — post hard landing inspection required",
-      fmSection: "3.16",
-      note: "Grounded automatically on a hard landing report. Flights may resume only after inspection and release by authorised HayesX personnel.",
-      raisedBy: f.pilotName,
-    });
-  }
+    if (f.hardLanding) {
+      await raiseDefect({
+        aircraftId: f.aircraftId,
+        source: "hard_landing",
+        itemId: null,
+        itemText: "Hard landing reported — post hard landing inspection required",
+        fmSection: "3.16",
+        note: "Grounded automatically on a hard landing report. Flights may resume only after inspection and release by authorised HayesX personnel.",
+        raisedBy: f.pilotName,
+      });
+    }
+  });
 }
 
 export async function deleteFlightDraft(id: string) {

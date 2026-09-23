@@ -77,17 +77,17 @@ export default function SignaturePad({
   // A stored signature is shown as an image until the pilot chooses to redraw.
   if (value && !dirty) {
     return (
-      <div className="rounded-xl border border-dashed border-line bg-card px-3 pt-2">
+      <div className="rounded-xl border border-line bg-white px-3 pt-2 text-[#5b6675]">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={value} alt="Stored signature" className="h-[64px] w-full object-contain" />
-        <div className="mt-1 flex items-center justify-between border-t border-line2 py-1.5">
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.06em] text-faint">
+        <div className="mt-1 flex items-center justify-between border-t border-[#e3e7ec] py-1.5">
+          <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#8a94a3]">
             {caption}
           </span>
           <button
             type="button"
             onClick={() => onChange(null)}
-            className="font-mono text-[10px] uppercase tracking-wider text-sky"
+            className="min-h-8 px-1 text-[14px] font-medium text-[#0a66d6]"
           >
             Redraw
           </button>
@@ -97,7 +97,7 @@ export default function SignaturePad({
   }
 
   return (
-    <div className="rounded-xl border border-dashed border-line bg-card px-3 pt-2">
+    <div className="rounded-xl border border-line bg-white px-3 pt-2 text-[#5b6675]">
       <canvas
         ref={canvasRef}
         onPointerDown={down}
@@ -107,15 +107,15 @@ export default function SignaturePad({
         className="h-[64px] w-full touch-none"
         aria-label="Sign here"
       />
-      <div className="mt-1 flex items-center justify-between border-t border-line2 py-1.5">
-        <span className="font-mono text-[9.5px] uppercase tracking-[0.06em] text-faint">
+      <div className="mt-1 flex items-center justify-between border-t border-[#e3e7ec] py-1.5">
+        <span className="text-[11px] font-medium uppercase tracking-[0.06em] text-[#8a94a3]">
           {dirty ? caption : "Sign here"}
         </span>
         {dirty ? (
           <button
             type="button"
             onClick={clear}
-            className="font-mono text-[10px] uppercase tracking-wider text-sky"
+            className="min-h-8 px-1 text-[14px] font-medium text-[#0a66d6]"
           >
             Clear
           </button>
@@ -134,7 +134,7 @@ export function SignatureButton({
   onSign: (dataUrl: string) => void;
   disabled?: boolean;
   label: string;
-  tone?: "go" | "sky";
+  tone?: "go" | "accent";
 }) {
   const [sig, setSig] = useState<string | null>(null);
   return (

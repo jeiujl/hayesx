@@ -192,7 +192,7 @@ export default function FlightEntry() {
 
       {flight.preflightId ? (
         <Link href={`/preflight/${flight.preflightId}`}>
-          <Card className="border-sky-line bg-sky-bg">
+          <Card className="border-accent-line bg-accent-bg">
             <Label>Linked preflight</Label>
             <div className="mt-0.5 text-[13.5px] font-medium">View the signed record →</div>
           </Card>
@@ -243,7 +243,7 @@ export default function FlightEntry() {
             <img
               src={flight.signature}
               alt="Pilot signature"
-              className="mt-1 h-[56px] w-full object-contain object-left"
+              className="mt-2 h-[64px] w-full rounded-lg bg-white object-contain object-left px-2"
             />
           ) : null}
           <div className="mt-1 border-t border-line2 pt-2">
@@ -266,7 +266,7 @@ export default function FlightEntry() {
           </Card>
           <SignaturePad value={signature} onChange={setSignature} />
           <Button tone="go" disabled={!signature} onClick={sign}>
-            SIGN &amp; LOCK ENTRY
+            Sign &amp; Lock Entry
           </Button>
           <Button tone="quiet" small onClick={discard}>
             Discard draft

@@ -203,7 +203,7 @@ export default function Grounded() {
       ) : null}
 
       <Button tone="go" disabled={!ready} onClick={release}>
-        SIGN &amp; RETURN TO SERVICE
+        Sign &amp; Return to Service
       </Button>
       <Card>
         <Cite>

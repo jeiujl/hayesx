@@ -47,7 +47,7 @@ export default function Manuals() {
       <ScreenTitle title="Manuals" />
 
       <LinkButton href="/manuals/emergency" tone="warn">
-        ⚠ EMERGENCY PROCEDURES
+        ⚠ Emergency Procedures
       </LinkButton>
 
       <label className="block rounded-xl border border-line bg-card px-3 py-2">

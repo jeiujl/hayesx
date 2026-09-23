@@ -51,11 +51,31 @@ for Supabase when you want records to sync across devices.
 | Emergency procedures — all 16 from FM Ch. 3, offline | ✅ |
 | Messages — bulletins with required acknowledgement | ✅ |
 | Account — profile, registry, signature, export, reset | ✅ |
+| Day / Night / Auto themes, applied before first paint | ✅ |
 | Multi-device sync, push notifications, maintenance tracking | Phase 2 |
 
 The safety rules from [`docs/03-data-model.md`](docs/03-data-model.md) §3.3 live
 in [`lib/repo.ts`](lib/repo.ts), not in the screens, so no UI path can produce an
 invalid record. [`tests/e2e.mjs`](tests/e2e.mjs) proves each one.
+
+### Design language
+
+The UI follows the conventions of aviation electronic flight bags — ForeFlight
+in particular, the category leader, which has the same three pillars as this
+app: checklist, logbook, documents. A HayesX pilot almost certainly has it on
+their phone already, so matching its conventions makes the app feel familiar
+from the first tap:
+
+- **Day / Night / Auto**, chosen with a three-button control, as EFBs do.
+  Day is the default because Part 103 operations are daytime-only.
+- **Grouped tables** — large titles, caps section headers, right-aligned
+  values, chevrons — and segmented controls for filters.
+- **Colour-coded checklist** states: open ring, green check, red cross.
+- **System fonts** — San Francisco on iPhone — which also means nothing loads
+  from the network, so the app renders identically offline.
+
+It adopts the category's conventions, not ForeFlight's branding: no logo,
+name, colours or assets of theirs are used.
 
 ### Code map
 

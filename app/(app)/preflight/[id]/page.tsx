@@ -71,11 +71,11 @@ export default function PreflightRecord() {
       {record.status === "signed" ? (
         flying ? (
           <Button tone="warn" onClick={finish}>
-            END FLIGHT
+            End Flight
           </Button>
         ) : valid ? (
           <Button tone="go" onClick={begin}>
-            START FLIGHT
+            Start Flight
           </Button>
         ) : (
           <Alert tone="caution" title="Expired">
@@ -95,7 +95,7 @@ export default function PreflightRecord() {
           <img
             src={record.signature}
             alt="Pilot signature"
-            className="mt-1 h-[56px] w-full object-contain object-left"
+            className="mt-2 h-[64px] w-full rounded-lg bg-white object-contain object-left px-2"
           />
           <div className="mt-1 border-t border-line2 pt-2 font-mono text-[10.5px] leading-relaxed text-mut">
             <b className="font-semibold text-ink">{fmtDateTime(record.signedAt!)}</b>

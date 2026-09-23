@@ -7,6 +7,7 @@
  * Covers the flows that carry the safety rules, not just the happy path:
  *   · onboarding gate (no profile / no airframe ⇒ setup)
  *   · a NO-GO raises a defect and grounds the aircraft app-wide
+ *   · a double-tapped NO-GO raises exactly one defect, not two
  *   · a grounded aircraft refuses both a new preflight and a logbook entry
  *   · a signed Return to Service is the only route back to airworthy
  *   · all 57 checklist items, both warning interstitials, sequential power-up
@@ -87,25 +88,40 @@ async function passAll() {
     }
     if (clicked === 0) return;
     await p.waitForTimeout(60);
-    const cont = p.getByRole('button', { name: /^(CONTINUE TO SECTION|COMPLETE & SIGN)/ });
+    const cont = p.getByRole('button', { name: /^(CONTINUE TO SECTION|COMPLETE & SIGN)/i });
     if (await cont.count() && await cont.isEnabled()) return;
   }
 }
 
 await step('section A: 7 declarations', async () => {
   await passAll();
-  await p.getByRole('button', { name: /CONTINUE TO SECTION B/ }).click();
+  await p.getByRole('button', { name: /CONTINUE TO SECTION B/i }).click();
 });
 await step('section B: 5 items', async () => {
   await passAll();
-  await p.getByRole('button', { name: /CONTINUE TO SECTION C/ }).click();
+  await p.getByRole('button', { name: /CONTINUE TO SECTION C/i }).click();
 });
 await p.screenshot({ path: 'tests/screenshots/e2e-2-checklist.png' });
+async function openDefects() {
+  return p.evaluate(async () => {
+    const db = await new Promise((r) => { const q = indexedDB.open('hayesx'); q.onsuccess = () => r(q.result); });
+    const all = await new Promise((r) => { const q = db.transaction('defects').objectStore('defects').getAll(); q.onsuccess = () => r(q.result); });
+    return all.filter((d) => d.status === 'open').length;
+  });
+}
+
 await step('section C: NO-GO on a propeller crack routes to defect capture', async () => {
   await p.getByRole('button', { name: '✓ PASS' }).first().click();       // C-01
-  await p.getByRole('button', { name: '✗ NO-GO' }).nth(1).click();       // C-02
+  // Fire two clicks at once, as a gloved double-tap does.
+  const nogo = p.getByRole('button', { name: '✗ NO-GO' }).nth(1);        // C-02
+  await Promise.all([nogo.dispatchEvent('click'), nogo.dispatchEvent('click')]);
   await p.waitForURL('**/preflight/nogo/**', { timeout: 8000 });
   await p.waitForSelector('text=NO-GO');
+});
+await step('RULE: a double-tapped NO-GO raises exactly one defect', async () => {
+  await p.waitForTimeout(400);
+  const n = await openDefects();
+  if (n !== 1) throw new Error(`expected 1 open defect, found ${n}`);
 });
 await p.screenshot({ path: 'tests/screenshots/e2e-3-nogo.png' });
 await step('save defect → aircraft GROUNDED app-wide', async () => {
@@ -129,14 +145,14 @@ await step('return to service releases the aircraft', async () => {
   await p.getByPlaceholder('Rotor 3 upper propeller replacement').fill('Rotor 3 upper propeller replacement');
   await p.getByPlaceholder('What was done').fill('Condemned and replaced propeller. Tie wire renewed.');
   await sign();
-  await p.getByRole('button', { name: /SIGN & RETURN TO SERVICE/ }).click();
+  await p.getByRole('button', { name: /SIGN & RETURN TO SERVICE/i }).click();
   await p.waitForURL('**/preflight', { timeout: 8000 });
   await p.waitForSelector('text=AIRWORTHY');
 });
 
 // ── Run 2: full clean pass through all 57 items ──
 await step('full clean run: 57 items, all sections', async () => {
-  await p.getByRole('button', { name: /START PREFLIGHT/ }).click();
+  await p.getByRole('button', { name: /START PREFLIGHT/i }).click();
   await p.waitForURL('**/preflight/run*');
   for (let guard = 0; guard < 60; guard++) {
     if (await p.getByRole('button', { name: 'I UNDERSTAND — CONTINUE' }).count()) {
@@ -156,7 +172,7 @@ await step('full clean run: 57 items, all sections', async () => {
       continue;
     }
     if (await p.getByRole('button', { name: '✓ PASS' }).count()) { await passAll(); }
-    const cont = p.getByRole('button', { name: /^CONTINUE TO SECTION/ });
+    const cont = p.getByRole('button', { name: /^CONTINUE TO SECTION/i });
     if (await cont.count() && await cont.isEnabled()) { await cont.click(); continue; }
     const done = p.getByRole('button', { name: 'COMPLETE & SIGN' });
     if (await done.count() && await done.isEnabled()) break;
@@ -168,7 +184,7 @@ await step('full clean run: 57 items, all sections', async () => {
 await p.screenshot({ path: 'tests/screenshots/e2e-4-sign.png' });
 await step('sign preflight → valid record', async () => {
   await sign();
-  await p.getByRole('button', { name: /SIGN & COMPLETE/ }).click();
+  await p.getByRole('button', { name: /SIGN & COMPLETE/i }).click();
   await p.waitForSelector('text=Preflight record', { timeout: 15000 });
 });
 await step('start flight → banner shows timer', async () => {
@@ -182,7 +198,7 @@ await step('end flight → prefilled logbook draft', async () => {
 });
 await step('RULE: cannot sign a logbook entry without a route', async () => {
   await sign();
-  const b = p.getByRole('button', { name: /SIGN & LOCK ENTRY/ });
+  const b = p.getByRole('button', { name: /SIGN & LOCK ENTRY/i });
   await b.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   await b.click();
   await p.waitForSelector('text=Enter the flight route before signing', { timeout: 5000 });
@@ -192,7 +208,7 @@ await step('complete and sign the entry → locked', async () => {
   await p.getByPlaceholder('Sandy Valley').fill('Sandy Valley');
   await p.getByPlaceholder('CAVU, 6 kt SW').fill('CAVU, 6 kt SW');
   await p.locator('input[type="number"]').fill('24');
-  const b2 = p.getByRole('button', { name: /SIGN & LOCK ENTRY/ });
+  const b2 = p.getByRole('button', { name: /SIGN & LOCK ENTRY/i });
   await b2.evaluate((el) => el.scrollIntoView({ block: 'center' }));
   await b2.click();
   await p.waitForSelector('text=Locked', { timeout: 8000 });
@@ -201,7 +217,7 @@ await p.screenshot({ path: 'tests/screenshots/e2e-5-entry.png' });
 await step('logbook totals reflect the signed flight', async () => {
   await p.goto(B + '/logbook');
   await p.waitForSelector('text=Jean Ridge');
-  const flights = await p.locator('.tabular-nums').first().innerText();
+  const flights = await p.getByTestId('total-flights').innerText();
   if (flights.trim() !== '1') throw new Error(`expected 1 flight, totals showed "${flights}"`);
 });
 await p.screenshot({ path: 'tests/screenshots/e2e-6-logbook.png' });

@@ -90,7 +90,7 @@ export default function ProcedureDetail() {
 
       {p.noFurtherFlight && aircraft?.status === "airworthy" ? (
         <Button tone="warn" onClick={ground}>
-          GROUND THIS AIRCRAFT
+          Ground This Aircraft
         </Button>
       ) : null}
 

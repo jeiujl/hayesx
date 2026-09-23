@@ -44,7 +44,7 @@ export default function Messages() {
             <div className="flex items-center gap-2">
               <Pill
                 tone={
-                  m.severity === "safety" ? "warn" : m.severity === "service" ? "caut" : "sky"
+                  m.severity === "safety" ? "warn" : m.severity === "service" ? "caut" : "accent"
                 }
               >
                 {m.kind === "revision" ? "Revision" : m.kind === "support" ? "Support" : "Safety bulletin"}
@@ -68,7 +68,7 @@ export default function Messages() {
               ) : (
                 <div className="mt-2.5">
                   <Button tone="warn" small onClick={() => acknowledge(m.id)}>
-                    ACKNOWLEDGE
+                    Acknowledge
                   </Button>
                 </div>
               )

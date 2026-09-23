@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { THEME_SCRIPT } from "@/lib/theme";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -12,7 +13,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#fbfbf9",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#eef1f5" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0f16" },
+  ],
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
@@ -26,18 +30,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="en" data-theme="day" suppressHydrationWarning>
       <head>
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin=""
-        />
-        <link
-          rel="stylesheet"
-          href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap"
-        />
+        <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>{children}</body>
     </html>
