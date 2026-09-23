@@ -22,6 +22,8 @@ export class PreconditionFailed extends Error {
 }
 
 const useBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID)
+// On Vercel the filesystem is read-only and per-instance, so the local driver must never be used there.
+const unconfigured = !useBlob && Boolean(process.env.VERCEL)
 
 /* ------------------------------------------------------------------ */
 /* Filesystem driver                                                   */
@@ -199,9 +201,18 @@ const blobDriver = {
   },
 }
 
-const driver = useBlob ? blobDriver : fsDriver
+function notConfigured() {
+  throw Object.assign(
+    new Error('The app’s storage isn’t connected yet. Connect a private Vercel Blob store to this project, then redeploy.'),
+    { status: 503, expose: true }
+  )
+}
 
-export const storageKind = useBlob ? 'vercel-blob' : 'filesystem'
+const unconfiguredDriver = { read: notConfigured, write: notConfigured, list: notConfigured, remove: notConfigured }
+
+const driver = useBlob ? blobDriver : unconfigured ? unconfiguredDriver : fsDriver
+
+export const storageKind = useBlob ? 'vercel-blob' : unconfigured ? 'unconfigured' : 'filesystem'
 
 /* ------------------------------------------------------------------ */
 /* Public helpers                                                      */

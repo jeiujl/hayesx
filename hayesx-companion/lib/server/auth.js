@@ -224,7 +224,7 @@ export function route(handler, { auth = true, staff = false } = {}) {
     } catch (err) {
       const status = err.status || 500
       if (status >= 500) console.error('[api]', err)
-      return fail(status, status >= 500 ? 'Something went wrong on our side. Please try again.' : err.message)
+      return fail(status, status >= 500 && !err.expose ? 'Something went wrong on our side. Please try again.' : err.message)
     }
   }
 }

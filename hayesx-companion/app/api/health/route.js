@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
 export async function GET(request) {
   const deep = new URL(request.url).searchParams.get('deep')
   const base = {
-    ok: true,
+    ok: storageKind !== 'unconfigured',
     storage: storageKind,
     authSecret: Boolean(process.env.AUTH_SECRET),
     staffCode: Boolean(process.env.HAYESX_STAFF_CODE),
