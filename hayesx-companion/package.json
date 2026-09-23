@@ -1,0 +1,31 @@
+{
+  "name": "hayesx-companion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "HayesX-250 owner & pilot companion app: preflight checklist, digital logbook, manuals, messages, account.",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "test:e2e": "node tests/e2e.mjs"
+  },
+  "engines": {
+    "node": ">=20.9"
+  },
+  "dependencies": {
+    "@fontsource/barlow": "^5.3.0",
+    "@fontsource/barlow-condensed": "^5.3.0",
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@vercel/blob": "^2.8.0",
+    "lucide-react": "^1.47.0",
+    "next": "^16.3.6",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "playwright-core": "^1.63.0",
+    "tailwindcss": "^4.3.3"
+  }
+}

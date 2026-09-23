@@ -1,0 +1,310 @@
+@import 'tailwindcss';
+
+/* `dark:` follows the in-app theme setting, falling back to the OS preference. */
+@custom-variant dark {
+  :root[data-theme='dark'] & {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) & {
+      @slot;
+    }
+  }
+}
+
+/*
+ * HayesX design tokens.
+ * Provisional palette drawn from the HayesX-250: carbon-fiber black, desert sand,
+ * PFD blue for interactive elements, and avionics status colors
+ * (green = go, amber = caution, red = warning). Swap values here to rebrand.
+ */
+:root {
+  --hx-bg: #f3f1ec;
+  --hx-surface: #ffffff;
+  --hx-surface-2: #eceae4;
+  --hx-surface-3: #e2dfd8;
+  --hx-ink: #101317;
+  --hx-ink-2: #454c55;
+  --hx-muted: #6f7680;
+  --hx-line: #d9d5cd;
+  --hx-carbon: #0e1116;
+  --hx-carbon-2: #1a1f26;
+  --hx-on-carbon: #f4f2ee;
+  --hx-accent: #1766d1;
+  --hx-accent-ink: #ffffff;
+  --hx-accent-soft: #e3eefc;
+  --hx-go: #0f8a45;
+  --hx-go-soft: #e1f4e8;
+  --hx-caution: #b87500;
+  --hx-caution-soft: #fdf1d8;
+  --hx-warning: #c8231a;
+  --hx-warning-soft: #fde6e4;
+  --hx-sand: #c9a36a;
+  --hx-focus: #1766d1;
+  --hx-shadow: 0 1px 2px rgb(16 19 23 / 0.06), 0 4px 16px rgb(16 19 23 / 0.06);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --hx-bg: #0b0d10;
+    --hx-surface: #14181d;
+    --hx-surface-2: #1b2027;
+    --hx-surface-3: #242a33;
+    --hx-ink: #f2f0ec;
+    --hx-ink-2: #c1c6cd;
+    --hx-muted: #8d949d;
+    --hx-line: #2a313a;
+    --hx-carbon: #07090b;
+    --hx-carbon-2: #12161b;
+    --hx-accent: #4c9dff;
+    --hx-accent-ink: #06121f;
+    --hx-accent-soft: #10243d;
+    --hx-go: #3ccf7a;
+    --hx-go-soft: #0f2a1b;
+    --hx-caution: #f5b53c;
+    --hx-caution-soft: #2f230b;
+    --hx-warning: #ff6b5e;
+    --hx-warning-soft: #33130f;
+    --hx-sand: #d9b47a;
+    --hx-focus: #4c9dff;
+    --hx-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.35);
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --hx-bg: #0b0d10;
+  --hx-surface: #14181d;
+  --hx-surface-2: #1b2027;
+  --hx-surface-3: #242a33;
+  --hx-ink: #f2f0ec;
+  --hx-ink-2: #c1c6cd;
+  --hx-muted: #8d949d;
+  --hx-line: #2a313a;
+  --hx-carbon: #07090b;
+  --hx-carbon-2: #12161b;
+  --hx-accent: #4c9dff;
+  --hx-accent-ink: #06121f;
+  --hx-accent-soft: #10243d;
+  --hx-go: #3ccf7a;
+  --hx-go-soft: #0f2a1b;
+  --hx-caution: #f5b53c;
+  --hx-caution-soft: #2f230b;
+  --hx-warning: #ff6b5e;
+  --hx-warning-soft: #33130f;
+  --hx-sand: #d9b47a;
+  --hx-focus: #4c9dff;
+  --hx-shadow: 0 1px 2px rgb(0 0 0 / 0.4), 0 6px 20px rgb(0 0 0 / 0.35);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-bg: var(--hx-bg);
+  --color-surface: var(--hx-surface);
+  --color-surface-2: var(--hx-surface-2);
+  --color-surface-3: var(--hx-surface-3);
+  --color-ink: var(--hx-ink);
+  --color-ink-2: var(--hx-ink-2);
+  --color-muted: var(--hx-muted);
+  --color-line: var(--hx-line);
+  --color-carbon: var(--hx-carbon);
+  --color-carbon-2: var(--hx-carbon-2);
+  --color-on-carbon: var(--hx-on-carbon);
+  --color-accent: var(--hx-accent);
+  --color-accent-ink: var(--hx-accent-ink);
+  --color-accent-soft: var(--hx-accent-soft);
+  --color-go: var(--hx-go);
+  --color-go-soft: var(--hx-go-soft);
+  --color-caution: var(--hx-caution);
+  --color-caution-soft: var(--hx-caution-soft);
+  --color-warning: var(--hx-warning);
+  --color-warning-soft: var(--hx-warning-soft);
+  --color-sand: var(--hx-sand);
+  --font-sans: 'Barlow', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --shadow-card: var(--hx-shadow);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    /* Keep focused/scrolled-to content clear of the sticky header and the tab bar. */
+    scroll-padding-top: 88px;
+    scroll-padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
+  body {
+    background: var(--hx-bg);
+    color: var(--hx-ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+  :focus-visible {
+    outline: 2px solid var(--hx-focus);
+    outline-offset: 2px;
+    border-radius: 6px;
+  }
+  button,
+  [role='button'] {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+  ::selection {
+    background: var(--hx-accent-soft);
+  }
+}
+
+@layer components {
+  .hx-label {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--hx-muted);
+  }
+  .hx-display {
+    font-family: var(--font-display);
+    font-weight: 700;
+    letter-spacing: 0.01em;
+  }
+  .hx-num {
+    font-variant-numeric: tabular-nums lining-nums;
+    font-feature-settings: 'tnum' 1, 'lnum' 1;
+  }
+  .hx-mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .hx-card {
+    background: var(--hx-surface);
+    border: 1px solid var(--hx-line);
+    border-radius: 16px;
+  }
+  .hx-input {
+    width: 100%;
+    min-height: 48px;
+    padding: 0.7rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid var(--hx-line);
+    background: var(--hx-surface);
+    color: var(--hx-ink);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+  .hx-input::placeholder {
+    color: var(--hx-muted);
+    opacity: 0.8;
+  }
+  .hx-input:focus {
+    outline: none;
+    border-color: var(--hx-accent);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--hx-accent) 22%, transparent);
+  }
+  .hx-input[readonly] {
+    background: var(--hx-surface-2);
+    color: var(--hx-ink-2);
+  }
+  textarea.hx-input {
+    min-height: 96px;
+    resize: vertical;
+  }
+  .hx-prose p {
+    margin: 0.6rem 0;
+    color: var(--hx-ink-2);
+  }
+  .hx-safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .hx-safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .hx-mask-aircraft {
+    -webkit-mask-image: url('/img/hx250-profile-mask.webp');
+    mask-image: url('/img/hx250-profile-mask.webp');
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+    mask-position: center;
+  }
+  .hx-drawing {
+    background: #fff;
+    border-radius: 12px;
+  }
+  :root[data-theme='dark'] .hx-drawing-img {
+    filter: invert(0.92) hue-rotate(180deg);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme='light']) .hx-drawing-img {
+      filter: invert(0.92) hue-rotate(180deg);
+    }
+  }
+}
+
+@keyframes hx-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes hx-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: none;
+  }
+}
+@keyframes hx-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.12);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.hx-anim-in {
+  animation: hx-fade-up 0.28s ease-out both;
+}
+.hx-anim-sheet {
+  animation: hx-sheet-up 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.hx-anim-pop {
+  animation: hx-pop 0.22s ease-out both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hx-anim-in,
+  .hx-anim-sheet,
+  .hx-anim-pop {
+    animation: none;
+  }
+}
+
+@media print {
+  .hx-no-print {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #000;
+  }
+}
